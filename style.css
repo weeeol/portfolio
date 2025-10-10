@@ -12,13 +12,6 @@ header {
   color: #fff;
 }
 
-nav a {
-  margin: 0 10px;
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-}
-
 section {
   padding: 40px 20px;
   max-width: 800px;
@@ -54,4 +47,5 @@ img {
   transform: scale(1.2);
   object-position: center top;
   object-fit: cover;
+
 }
