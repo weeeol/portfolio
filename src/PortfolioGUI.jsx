@@ -23,7 +23,7 @@ const PortfolioGUI = ({ onExit }) => {
     let worldX = 0;
     let worldY = 0;
 
-    // Generate Parallax Starfield
+    // Generate Parallax Starfield (Memoized conceptually so they only generate once)
     const particles = [];
     const stars = Array.from({ length: 300 }, () => ({
       x: (Math.random() - 0.5) * 4000,
@@ -34,8 +34,8 @@ const PortfolioGUI = ({ onExit }) => {
 
     // Hidden Planets to discover
     const planets = [
-      { x: 800, y: -600, radius: 100, color: '#16a34a', hasRing: false }, // Android Green
-      { x: -1200, y: 900, radius: 180, color: '#0ea5e9', hasRing: true }  // Sky Blue
+      { x: 800, y: -600, radius: 100, color: '#16a34a', hasRing: false, name: 'Android Green' },
+      { x: -1200, y: 900, radius: 180, color: '#0ea5e9', hasRing: true, name: 'Sky Blue' }
     ];
 
     // Global Input Listeners (These trigger even through the UI)
@@ -184,11 +184,12 @@ const PortfolioGUI = ({ onExit }) => {
     <div className="relative w-full h-screen text-gray-200 font-sans overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth selection:bg-white selection:text-black">
       
       {/* Background Canvas fixed to the back */}
-      <canvas ref={canvasRef} className="fixed inset-0 z-[-1] pointer-events-none" />
+      <canvas ref={canvasRef} className="fixed inset-0 z-[-1] pointer-events-none" aria-label="Interactive space exploration background" />
 
       <button 
         onClick={onExit}
-        className="fixed top-8 right-8 z-50 text-xs tracking-[0.2em] uppercase text-gray-400 hover:text-white transition-colors duration-300"
+        className="fixed top-8 right-8 z-50 text-xs tracking-[0.2em] uppercase text-gray-400 hover:text-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-white rounded px-2 py-1"
+        aria-label="Close graphical interface"
       >
         [ Close GUI ]
       </button>

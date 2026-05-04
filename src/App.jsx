@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import PortfolioGUI from './PortfolioGUI';
 import MatrixRain from './MatrixRain';
 import StartupIntro from './StartupIntro';
@@ -19,9 +19,9 @@ const asciiArt = `
 
 // Your static "Database"
 const fileSystem = {
-  "help": "Available commands: \n- whoami: About me\n- skills: Technical proficiency\n- projects: View portfolio work\n- startx: Launch graphical UI\n- clear: Clear terminal",
+  "help": "Available commands: \n- whoami: About me\n- skills: Technical proficiency\n- projects: View portfolio work\n- startx / launch: Launch graphical UI\n- clear: Clear terminal\n- matrix: Initialize Matrix protocol\n- theme <dark|light|cyberpunk|hacker>: Change terminal theme\n- sudo <command>: Execute a command as superuser",
   "whoami": "Veol Steve Jose | CS Student (2024-2028) at St. Joseph Engineering College.\nAspiring game developer. I pride myself on professional transparency and answering questions honestly.",
-  "skills": "=== CORE TECHNICAL SKILLS ===\nLanguages: C, C++, C#, Java, Python, SQL, Bash\nEngines: Unity, Unreal Engine, Roblox Studio\nTools: Docker, Git, Pygame",
+  "skills": "=== CORE TECHNICAL SKILLS ===\nLanguages: C, C++, C#, Java, Python, JavaScript, React, Kotlin, Lua, HTML5, CSS3, Bash Script\nGame dev and design: Unreal Engine, Unity, Blender, GIMP\nTools: Node.js, Next.js, FastAPI, Qt, SQLite, MySQL, CMake, NPM, Vercel, Render, Raspberry Pi, LaTeX",
   "projects": "1. Text Editor: Python & Tkinter desktop application.\n2. ProtoPlay: Pygame experimental foundation for game mechanics & input handling.\n3. Inventory Lookup: C-based system utilizing Hash Tables, Linked Lists, and Queues.\n4. ExplainIt: AI & static analysis tool for code explanation without source modification.\n5. Flowmake: Full-stack Python AST parser that automatically generates professional flowcharts."
 };
 
@@ -32,11 +32,18 @@ const App = () => {
   const bottomRef = useRef(null);
 
   // Easter Egg States
-  const [theme, setTheme] = useState({ bg: 'bg-black', text: 'text-green-500', accent: 'text-emerald-400' });
+  const [theme, setTheme] = useState({ bg: 'bg-slate-950', text: 'text-slate-300', accent: 'text-cyan-400' });
   const [showMatrix, setShowMatrix] = useState(false);
   
   // The master switch for the Graphical UI
   const [guiMode, setGuiMode] = useState(false);
+
+  const availableThemes = useMemo(() => ({
+    light: { bg: 'bg-slate-50', text: 'text-slate-900', accent: 'text-indigo-600' },
+    cyberpunk: { bg: 'bg-purple-900', text: 'text-yellow-400', accent: 'text-pink-500' },
+    dark: { bg: 'bg-slate-950', text: 'text-slate-300', accent: 'text-cyan-400' },
+    hacker: { bg: 'bg-black', text: 'text-green-500', accent: 'text-emerald-400' }
+  }), []);
 
   // Auto-scroll to bottom when history updates
   useEffect(() => {
@@ -65,22 +72,25 @@ const App = () => {
         output = 'Initializing Matrix protocol...';
       }
       else if (trimmedInput.startsWith('sudo ')) {
-        output = `veol-os: ${trimmedInput}: Permission denied.\nThis incident has been reported to the system administrator.`;
+        output = `veol-os: ${trimmedInput}: Permission denied.\nThis incident has been reported to the system administrator :) .`;
       } 
       else if (trimmedInput.startsWith('theme ')) {
         const selectedTheme = trimmedInput.split(' ')[1];
         
         if (selectedTheme === 'light') {
-          setTheme({ bg: 'bg-white', text: 'text-gray-900', accent: 'text-blue-600' });
+          setTheme(availableThemes.light);
           output = 'Theme updated to light mode. My eyes are burning.';
         } else if (selectedTheme === 'cyberpunk') {
-          setTheme({ bg: 'bg-purple-900', text: 'text-yellow-400', accent: 'text-pink-500' });
+          setTheme(availableThemes.cyberpunk);
           output = 'Wake up, samurai. Theme updated to cyberpunk.';
-        } else if (selectedTheme === 'hacker' || selectedTheme === 'default') {
-          setTheme({ bg: 'bg-black', text: 'text-green-500', accent: 'text-emerald-400' });
-          output = 'Theme restored to default hacker mode.';
+        } else if (selectedTheme === 'dark' || selectedTheme === 'default') {
+          setTheme(availableThemes.dark);
+          output = 'Theme updated to a clean dark mode.';
+        } else if (selectedTheme === 'hacker') {
+          setTheme(availableThemes.hacker);
+          output = 'Theme restored to the classic hacker mode.';
         } else {
-          output = `Theme '${selectedTheme}' not found.\nAvailable themes: hacker, light, cyberpunk.`;
+          output = `Theme '${selectedTheme}' not found.\nAvailable themes: dark, hacker, light, cyberpunk.`;
         }
       } 
       else if (fileSystem[trimmedInput]) {
@@ -99,7 +109,10 @@ const App = () => {
     return <StartupIntro onComplete={() => setShowIntro(false)} />;
   }
 
-  // If GUI mode is active, render the Asteroid GUI instead of the terminal
+  if (showMatrix) {
+    return <MatrixRain onExit={() => setShowMatrix(false)} />;
+  }
+
   if (guiMode) {
     return <PortfolioGUI onExit={() => setGuiMode(false)} />;
   }
@@ -108,9 +121,6 @@ const App = () => {
   return (
     <div className={`${theme.bg} ${theme.text} font-mono h-screen w-full p-6 overflow-y-auto sm:text-lg text-sm transition-colors duration-300`}>
       
-      {/* Render the Matrix Canvas if active */}
-      {showMatrix && <MatrixRain onExit={() => setShowMatrix(false)} />}
-
       {/* ASCII Welcome Header */}
       <div className="mb-8">
         <pre className={`${theme.accent} font-bold leading-tight`}>
@@ -131,7 +141,7 @@ const App = () => {
 
       {/* Active Input Line */}
       <div className="flex items-center">
-        <span className="opacity-70 mr-2 flex-shrink-0">guest@veol-portfolio:~$</span>
+        <span className="opacity-70 mr-2 flex-shrink-0" aria-hidden="true">guest@veol-portfolio:~$</span>
         <input
           type="text"
           value={input}
@@ -142,6 +152,7 @@ const App = () => {
           autoFocus
           spellCheck="false"
           autoComplete="off"
+          aria-label="Terminal user input"
         />
       </div>
       

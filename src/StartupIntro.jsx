@@ -58,10 +58,10 @@ const StartupIntro = ({ onComplete }) => {
   }, [bootLines, onComplete]);
 
   return (
-    <div className="h-screen w-full bg-black text-green-500 font-mono p-6 sm:p-10 flex flex-col justify-between">
+    <div className="h-screen w-full bg-slate-950 text-slate-300 font-mono p-6 sm:p-10 flex flex-col justify-between">
       <div>
-        <div className="text-xs sm:text-sm opacity-70">veol-os boot sequence</div>
-        <pre className="mt-6 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed">
+        <div className="text-xs sm:text-sm opacity-70 text-cyan-400">veol-os boot sequence</div>
+        <pre className="mt-6 whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-cyan-400">
 {` __      __ ______  ____   _
  \\ \\    / /|  ____|/ __ \\ | |
   \\ \\  / / | |__  | |  | || |
@@ -79,13 +79,13 @@ const StartupIntro = ({ onComplete }) => {
       </div>
 
       <div>
-        <div className="h-2 w-full border border-green-700/60 bg-black overflow-hidden">
+        <div className="h-2 w-full border border-cyan-800/60 bg-slate-950 overflow-hidden rounded-sm">
           <div
-            className="h-full bg-green-500 transition-all duration-75"
+            className="h-full bg-cyan-400 transition-all duration-75"
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
-        <div className="mt-2 text-[10px] sm:text-xs opacity-70 flex justify-between">
+        <div className="mt-2 text-[10px] sm:text-xs opacity-70 flex justify-between text-cyan-400">
           <span>booting... {Math.min(progress, 100)}%</span>
           <span>Press Enter to skip</span>
         </div>

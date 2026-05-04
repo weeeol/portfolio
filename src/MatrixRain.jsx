@@ -65,9 +65,9 @@ const MatrixRain = ({ onExit }) => {
 
   return (
     // This wrapper div covers the whole screen and listens for clicks to exit
-    <div className="fixed inset-0 z-50 bg-black cursor-pointer" onClick={onExit}>
-      <canvas ref={canvasRef} className="block w-full h-full" />
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-green-500 font-mono bg-black/80 px-4 py-2 rounded">
+    <div className="fixed inset-0 z-50 bg-black cursor-pointer" onClick={onExit} role="button" aria-label="Exit Matrix mode">
+      <canvas ref={canvasRef} className="block w-full h-full" aria-label="Matrix rain animation" />
+      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-green-500 font-mono bg-black/80 px-4 py-2 rounded" aria-hidden="true">
         Click anywhere to exit Matrix mode
       </div>
     </div>
