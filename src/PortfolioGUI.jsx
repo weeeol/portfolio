@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import bgImage from './assets/BG2.png';
 import profileImage from './assets/Profile.png';
+import PixelWater from './PixelWater';
 
 const DraggableNote = ({ title, content, initialRotation }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -71,19 +72,18 @@ const DraggableNote = ({ title, content, initialRotation }) => {
 const PortfolioGUI = ({ onExit }) => {
   return (
     // Wrap with the injected Google Font and Stardew styling logic
-    <div className="relative w-full h-screen font-mono text-[#5c4033] font-bold overflow-y-auto overflow-x-hidden scroll-smooth selection:bg-[#ff8c00] selection:text-white"
+    <div className="relative w-full min-h-screen font-mono text-[#5c4033] font-bold overflow-y-auto overflow-x-hidden scroll-smooth selection:bg-[#ff8c00] selection:text-white"
          style={{ 
-           fontFamily: '"Press Start 2P", system-ui',
-           backgroundImage: `url(${bgImage})`,
-           backgroundSize: 'cover',
-           backgroundPosition: 'center',
-           backgroundAttachment: 'fixed'
+           fontFamily: '"Press Start 2P", system-ui'
          }}>
       
-      {/* Inject Google Pixel Font for Stardew Vibes */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-      `}} />
+      <PixelWater />
+
+      <div className="relative z-10">
+        {/* Inject Google Pixel Font for Stardew Vibes */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        `}} />
 
       <button 
         onClick={onExit}
@@ -228,7 +228,8 @@ const PortfolioGUI = ({ onExit }) => {
         <div className="w-full py-4 text-center tracking-widest leading-loose">
           © 2026 Veol Steve Jose — made with React, Canvas, and Tailwind
         </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 };
