@@ -92,7 +92,18 @@ const PixelWater = () => {
       }
     };
 
-    const draw = () => {
+    let lastFrameTime = 0;
+    const fpsLimit = 50;
+    const frameDuration = 1000 / fpsLimit;
+
+    const draw = (timestamp) => {
+      animationFrame = requestAnimationFrame(draw);
+
+      if (timestamp - lastFrameTime < frameDuration) {
+        return; // Skip drawing to enforce FPS limit
+      }
+      lastFrameTime = timestamp;
+
       // Fill base water
       ctx.fillStyle = `rgb(${waterColors[2][0]}, ${waterColors[2][1]}, ${waterColors[2][2]})`;
       ctx.fillRect(0, 0, width, height);
@@ -241,11 +252,9 @@ const PixelWater = () => {
           ctx.globalAlpha = 1.0; // Reset alpha for water drawing etc.
         });
       }
-
-      animationFrame = requestAnimationFrame(draw);
     };
 
-    draw();
+    animationFrame = requestAnimationFrame(draw);
 
     const handlePointerMove = (e) => {
       // Allow moving ripples even if pointer is up, for interactive feel
