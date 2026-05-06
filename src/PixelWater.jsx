@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import fishImgSrc from './assets/Salmon.png';
 
 const PixelWater = () => {
   const canvasRef = useRef(null);
@@ -48,15 +49,58 @@ const PixelWater = () => {
     
     const getIndex = (x, y) => x + y * cols;
 
+    const fishImg = new Image();
+    fishImg.src = fishImgSrc;
+    
+    // Pre-render a darkened silhouette to avoid using extremely slow ctx.filter
+    const shadowCanvas = document.createElement('canvas');
+    const shadowCtx = shadowCanvas.getContext('2d', { willReadFrequently: true });
+    
+    fishImg.onload = () => {
+      shadowCanvas.width = fishImg.naturalWidth;
+      shadowCanvas.height = fishImg.naturalHeight;
+      shadowCtx.drawImage(fishImg, 0, 0);
+      shadowCtx.globalCompositeOperation = 'source-in';
+      shadowCtx.fillStyle = 'black';
+      shadowCtx.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+    };
+    
+    const fishes = Array.from({ length: 8 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.8,
+      z: 0,
+      vz: 0,
+      isJumping: false,
+    }));
+
+    const applyRipple = (clientX, clientY, strength, size) => {
+      const cx = Math.floor(clientX / scale);
+      const cy = Math.floor(clientY / (scale * yScale));
+
+      for(let x = -size; x <= size; x++) {
+        for(let y = -size; y <= size; y++) {
+          const nx = cx + x;
+          const ny = cy + y;
+          // Only apply if within bounds
+          if(nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1) {
+              // Note: using += feels slightly more natural for multiple interactions
+              previous[getIndex(nx, ny)] += strength; 
+          }
+        }
+      }
+    };
+
     const draw = () => {
       // Fill base water
       ctx.fillStyle = `rgb(${waterColors[2][0]}, ${waterColors[2][1]}, ${waterColors[2][2]})`;
       ctx.fillRect(0, 0, width, height);
 
-      const time = Date.now() * 0.0015; // Time variable for Stardew-like wave scrolling
+      const time = Date.now() * 0.001; // Slower time for very calm water
 
-      for (let i = 1; i < cols - 1; i++) {
-        for (let j = 1; j < rows - 1; j++) {
+      for (let j = 1; j < rows - 1; j++) {
+        for (let i = 1; i < cols - 1; i++) {
           const idx = i + j * cols;
           
           current[idx] = (
@@ -68,30 +112,41 @@ const PixelWater = () => {
 
           current[idx] *= dampening;
 
-          // Val represents interactive fluid ripples
           let val = current[idx];
-          
-          // Very subtle, sparse horizontal lines (Stardew style)
-          // Mainly uses Y (j) for straight lines, with a slight X (i) to break it into dashes
-          const stardewWave = 
-            Math.sin((j * 0.15) - time * 0.6) * 5 + 
-            Math.sin((i * 0.1) + (j * 0.05) + time * 0.3) * 2.5;
-          
-          val += stardewWave;
-          
-          if (val > 4 || val < -4) {
-            let colorIndex = 2; // base
-            if (val > 25) colorIndex = 0; // interaction foam
-            else if (val > 7) colorIndex = 1; // sparse light blue lines
-            else if (val < -15) colorIndex = 4; // deep trough (splash)
-            else if (val < -7) colorIndex = 3; // sparse dark lines
+          let colorIndex = 2; // base
+          let stretch = 1;
 
-            if (colorIndex !== 2) {
-              const c = waterColors[colorIndex];
-              ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-              // Draw clean horizontal dashes
-              const stretch = (colorIndex === 1 || colorIndex === 3) ? 4 : 1;
-              ctx.fillRect(i * scale, j * scale * yScale, scale * stretch, scale * yScale);
+          // 1. Draw Stardew-style idle lines VERY sparsely
+          // Moving from BOTTOM to TOP, broken into disjoint randomized dashes
+          const wavePhase = j * 0.12 + Math.sin(i * 0.015) * 1.2 + time * 1.5;
+          const lineNoise = Math.sin(wavePhase);
+          
+          // Break the lines horizontally into disjoint segments using deterministic spatial noise
+          const dashBreak = Math.sin(i * 0.15 + Math.sin(j * 0.1) * 2);
+          
+          // > 0.995 ensures incredibly thin lines (almost single pixel height)
+          if (lineNoise > 0.995 && dashBreak > 0.3) { 
+            colorIndex = 1; // light blue lines
+            // Very short, thin disjointed dashes
+            stretch = 2 + Math.floor(Math.abs(Math.cos(i * 0.2)) * 3); 
+          }
+
+          // 2. Override with interactive fluid ripples if they are strong
+          if (val > 2 || val < -2) {
+            if (val > 20) { colorIndex = 0; stretch = 1; } // foam
+            else if (val > 5) { colorIndex = 1; stretch = 1; } // light blue splash
+            else if (val < -10) { colorIndex = 4; stretch = 1; } // deep splash
+            else if (val < -4) { colorIndex = 3; stretch = 1; } // med dark splash
+          }
+
+          if (colorIndex !== 2) {
+            const c = waterColors[colorIndex];
+            ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+            ctx.fillRect(i * scale, j * scale * yScale, scale * stretch, scale * yScale);
+            
+            // Skip inner loop if stretched to prevent drawing overlapping segments
+            if (stretch > 1) {
+              i += stretch - 1; 
             }
           }
         }
@@ -102,26 +157,95 @@ const PixelWater = () => {
       previous = current;
       current = temp;
 
+      // Draw Fishes!
+      if (fishImg.complete && fishImg.naturalWidth > 0) {
+        fishes.forEach(fish => {
+          // Physics step
+          if (fish.isJumping) {
+             fish.z += fish.vz;
+             fish.vz -= 0.6; // gravity
+             fish.x += fish.vx * 1.5; 
+             fish.y += fish.vy * 1.5;
+             
+             if (fish.z <= 0) {
+               // Landing splash
+               fish.z = 0;
+               fish.isJumping = false;
+               applyRipple(fish.x, fish.y, 900, 1);
+             }
+          } else {
+             // Swimming
+             fish.x += fish.vx;
+             fish.y += fish.vy;
+             
+             // Rare jump chance (very low probability)
+             if (Math.random() < 0.0005) { 
+                fish.isJumping = true;
+                fish.vz = 6 + Math.random() * 6; // jump height
+                applyRipple(fish.x, fish.y, -400, 0); // take-off splash
+             }
+             
+             // Smooth directional wandering
+             if (Math.random() < 0.05) {
+                fish.vx += (Math.random() - 0.5) * 0.4;
+                fish.vy += (Math.random() - 0.5) * 0.4;
+                
+                // Limit speed
+                const speed = Math.hypot(fish.vx, fish.vy);
+                if (speed > 1.2) {
+                  fish.vx /= speed;
+                  fish.vy /= speed;
+                }
+             }
+          }
+
+          // Screen wrapping
+          if (fish.x < -50) fish.x = width + 50;
+          if (fish.x > width + 50) fish.x = -50;
+          if (fish.y < -50) fish.y = height + 50;
+          if (fish.y > height + 50) fish.y = -50;
+
+          const isFacingLeft = fish.vx < 0;
+
+          ctx.save();
+          // Adjust translation for oblique perspective height when jumping
+          ctx.translate(fish.x, fish.y);
+          if (isFacingLeft) {
+             ctx.scale(-1, 1); 
+          }
+          
+          const fw = 48; // scale fish up a bit so it's visible
+          const fh = 48;
+
+          if (fish.isJumping) {
+             // Draw water shadow (bottom)
+             ctx.globalAlpha = 0.15;
+             ctx.drawImage(shadowCanvas, -fw/2, -fh/2, fw, fh);
+             
+             // Draw actual jumping fish, floating by 'z'
+             ctx.globalAlpha = 1.0;
+             const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2);
+             ctx.translate(0, -fish.z);
+             ctx.rotate(jumpAngle);
+             ctx.drawImage(fishImg, -fw/2, -fh/2, fw, fh);
+          } else {
+             // Draw completely darkened fish shadow swimming under water
+             ctx.globalAlpha = 0.2;
+             // Add slight rotation wiggle while swimming
+             const wiggle = Math.sin(time * 200 + fish.x * 0.1) * 0.1;
+             ctx.rotate((Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle);
+             ctx.drawImage(shadowCanvas, -fw/2, -fh/2, fw, fh);
+          }
+          
+          ctx.restore();
+          ctx.globalAlpha = 1.0; // Reset alpha for water drawing etc.
+        });
+      }
+
       animationFrame = requestAnimationFrame(draw);
     };
 
     draw();
-
-    const applyRipple = (clientX, clientY, strength, size) => {
-      const cx = Math.floor(clientX / scale);
-      const cy = Math.floor(clientY / (scale * yScale));
-
-      // Drop in a pattern to look more like a pixel splash
-      for(let x = -size; x <= size; x++) {
-        for(let y = -size; y <= size; y++) {
-          const nx = cx + x;
-          const ny = cy + y;
-          if(nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1) {
-              previous[getIndex(nx, ny)] = strength;
-          }
-        }
-      }
-    };
 
     const handlePointerMove = (e) => {
       // Allow moving ripples even if pointer is up, for interactive feel
