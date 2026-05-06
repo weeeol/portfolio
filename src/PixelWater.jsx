@@ -220,7 +220,8 @@ const PixelWater = () => {
 
           ctx.save();
           // Adjust translation for oblique perspective height when jumping
-          ctx.translate(fish.x, fish.y);
+          // Use Math.floor to prevent sub-pixel rendering jitter (vibration)
+          ctx.translate(Math.floor(fish.x), Math.floor(fish.y));
           if (isFacingLeft) {
              ctx.scale(-1, 1); 
           }
@@ -242,8 +243,8 @@ const PixelWater = () => {
           } else {
              // Draw completely darkened fish shadow swimming under water
              ctx.globalAlpha = 0.2;
-             // Add slight rotation wiggle while swimming
-             const wiggle = Math.sin(time * 200 + fish.x * 0.1) * 0.1;
+             // Add slight rotation wiggle while swimming - using a much slower sine wave
+             const wiggle = Math.sin(time * 5 + fish.x * 0.05) * 0.1;
              ctx.rotate((Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle);
              ctx.drawImage(shadowCanvas, -fw/2, -fh/2, fw, fh);
           }

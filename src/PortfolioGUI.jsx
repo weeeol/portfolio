@@ -1,5 +1,4 @@
-import React, { useState, useRef } from 'react';
-import bgImage from './assets/BG2.png';
+import React, { useState, useRef, useEffect } from 'react';
 import profileImage from './assets/Profile.png';
 import PixelWater from './PixelWater';
 
@@ -70,6 +69,69 @@ const DraggableNote = ({ title, content, initialRotation }) => {
 };
 
 const PortfolioGUI = ({ onExit }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingText, setLoadingText] = useState("Loading");
+  const [subText, setSubText] = useState("Generating world...");
+
+  useEffect(() => {
+    // Simulate loading progress with fun retro messages
+    const texts = ["Generating world...", "Packing inventory...", "Watering crops...", "Ready!"];
+    
+    // Sequence the texts to change as it loads
+    const timer1 = setTimeout(() => setSubText(texts[1]), 800);
+    const timer2 = setTimeout(() => setSubText(texts[2]), 1600);
+    const timer3 = setTimeout(() => setSubText(texts[3]), 2200);
+    
+    // Close loading screen at 2.5 seconds
+    const finishTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+
+    // Animating the '...' effect
+    let dots = 0;
+    const dotInterval = setInterval(() => {
+      dots = (dots + 1) % 4;
+      setLoadingText("Loading" + ".".repeat(dots));
+    }, 300);
+
+    return () => {
+      clearTimeout(timer1); clearTimeout(timer2); clearTimeout(timer3);
+      clearTimeout(finishTimer); clearInterval(dotInterval);
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-[#2d1b14] flex flex-col items-center justify-center font-mono z-[100]" style={{ fontFamily: '"Press Start 2P", system-ui' }}>
+        {/* Make sure the font loads during the loading screen too */}
+        <style dangerouslySetInnerHTML={{__html: `@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');`}} />
+        
+        <h2 className="text-[#fcd34d] text-xl md:text-3xl mb-12 tracking-widest min-w-[200px] text-left">
+          {loadingText}
+        </h2>
+        
+        {/* Retro blocky progress bar */}
+        <div className="w-64 md:w-96 h-10 bg-[#1a100c] border-[6px] border-[#8b5a2b] p-1 relative shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
+           <div className="h-full bg-[#4ade80] animate-[load_2.5s_steps(10)_forwards]"></div>
+        </div>
+        
+        <p className="mt-8 text-[#e6c17a] text-[10px] md:text-xs uppercase animate-pulse">{subText}</p>
+        
+        {/* Use steps() to make the progress bar "chunk" forward like old games */}
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes load {
+            0% { width: 0%; }
+            20% { width: 20%; }
+            40% { width: 30%; }
+            60% { width: 60%; }
+            80% { width: 90%; }
+            100% { width: 100%; }
+          }
+        `}} />
+      </div>
+    );
+  }
+
   return (
     // Wrap with the injected Google Font and Stardew styling logic
     <div className="relative w-full min-h-screen font-mono text-[#5c4033] font-bold overflow-y-auto overflow-x-hidden scroll-smooth selection:bg-[#ff8c00] selection:text-white"
@@ -114,7 +176,7 @@ const PortfolioGUI = ({ onExit }) => {
           {/* Left: Portrait */}
           <div className="w-full md:w-2/5 flex flex-col items-center justify-center gap-8 z-10 mt-4 md:mt-0">
             <div className="w-84 h-100 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
-              <img src={profileImage} alt="Profile" className="w-full h-full object-cover" style={{ imageRendering: 'pixelated' }} />
+              <img src={profileImage} alt="Profile" className="w-full h-full object-cover object-top scale-125" />
             </div>
             <h2 className="text-xs md:text-sm text-[#4a2e1b] bg-[#dfbb85] border-[6px] border-[#8b5a2b] px-6 py-4 w-full max-w-[250px] text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">CS ENGINEER</h2>
           </div>
@@ -180,7 +242,7 @@ const PortfolioGUI = ({ onExit }) => {
       {/* Section 2: Tech Arsenal (Wooden Bulletin Board) */}
       <section className="w-full flex flex-col items-center justify-start p-6 py-12 bg-transparent">
          <div className="max-w-6xl w-full space-y-16 bg-[#fff9e6]/95 border-x-[16px] border-[#8b5a2b] p-10 shadow-[10px_10px_0_rgba(0,0,0,0.4)]">
-          <h2 className="text-2xl md:text-4xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-8 border-dashed border-[#8b5a2b] pb-6">Town Ledger: Works</h2>
+          <h2 className="text-2xl md:text-4xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-8 border-dashed border-[#8b5a2b] pb-6">Town Ledger: Projects</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
             
