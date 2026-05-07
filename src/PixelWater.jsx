@@ -122,18 +122,16 @@ const PixelWater = () => {
     ];
 
     // --- Textures ---
-    // Water Texture Map (Dynamic)
     const waterTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, waterTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // Pixelated look
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    // Fish Sprite Texture
     const fishTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, fishTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); // fallback
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -163,7 +161,6 @@ const PixelWater = () => {
       pixelData = new Uint8Array(cols * rows * 4);
       basePixelData = new Uint8Array(cols * rows * 4);
       
-      // Pre-fill a base grid to reset via ultra-fast memory copy per frame
       for(let k = 0; k < cols * rows; k++) {
         const idx = k * 4;
         basePixelData[idx] = waterColors[2][0];
@@ -214,10 +211,7 @@ const PixelWater = () => {
       if (timestamp - lastFrameTime < frameDuration) return;
       lastFrameTime = timestamp;
 
-      // 1. CPU Water Simulation Step
       const time = Date.now() * 0.001;
-      
-      // Fast C-level memory copy restores the deep blue base color instantly
       pixelData.set(basePixelData);
 
       for (let j = 1; j < rows - 1; j++) {
@@ -234,7 +228,7 @@ const PixelWater = () => {
           current[idx] *= dampening;
 
           let val = current[idx];
-          let colorIndex = 2; // Base
+          let colorIndex = 2;
           let stretch = 1;
 
           const wavePhase = j * 0.12 + Math.sin(i * 0.015) * 1.2 + time * 1.5;
@@ -253,12 +247,11 @@ const PixelWater = () => {
             else if (val < -4) { colorIndex = 3; stretch = 1; }
           }
 
-          // Inject color changes right into the texture map array
           if (colorIndex !== 2) {
             const c = waterColors[colorIndex];
             for (let s = 0; s < stretch; s++) {
               const sx = i + s;
-              if (sx >= cols) break; // Keep safely inside grid
+              if (sx >= cols) break;
               const pIdx = (sx + j * cols) * 4;
               pixelData[pIdx] = c[0];
               pixelData[pIdx+1] = c[1];
@@ -269,12 +262,10 @@ const PixelWater = () => {
         }
       }
 
-      // Swap buffer pointers
       const temp = previous;
       previous = current;
       current = temp;
 
-      // 2. WebGL Rendering Step
       gl.clearColor(14/255, 116/255, 175/255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -286,9 +277,7 @@ const PixelWater = () => {
       gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
       gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
 
-      // --- Draw Water Quad ---
       gl.bindTexture(gl.TEXTURE_2D, waterTexture);
-      // Pushing byte array sub-updates to the GPU is immensely faster than thousands of 2D box fills
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 
       let waterMatrix = m3.projection(width, height);
@@ -297,19 +286,17 @@ const PixelWater = () => {
       gl.uniformMatrix3fv(matrixLoc, false, waterMatrix);
       gl.uniform1f(alphaLoc, 1.0);
       gl.uniform1i(isShadowLoc, 0);
-      gl.uniform1i(imageLoc, 0); // Active Texture 0
+      gl.uniform1i(imageLoc, 0); 
       
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-      // --- Draw Fishes ---
       if (fishImg.complete && fishImg.naturalWidth > 0) {
         gl.bindTexture(gl.TEXTURE_2D, fishTexture);
 
         fishes.forEach(fish => {
-          // Physics step
           if (fish.isJumping) {
              fish.z += fish.vz;
-             fish.vz -= 0.6; // Gravity
+             fish.vz -= 0.6; 
              fish.x += fish.vx * 1.5; 
              fish.y += fish.vy * 1.5;
              
@@ -349,9 +336,7 @@ const PixelWater = () => {
           const fh = 48;
           let matrix;
 
-          // Note: Standard 3x3 matrices compose backwards for vertex execution
           if (fish.isJumping) {
-             // 1. Render Floating Shadow Stack
              matrix = m3.projection(width, height);
              matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
              if (isFacingLeft) matrix = m3.scale(matrix, -1, 1); 
@@ -363,7 +348,6 @@ const PixelWater = () => {
              gl.uniform1i(isShadowLoc, 1);
              gl.drawArrays(gl.TRIANGLES, 0, 6);
              
-             // 2. Render Full Fish Stack
              const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2);
              matrix = m3.projection(width, height);
              matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
@@ -378,7 +362,6 @@ const PixelWater = () => {
              gl.uniform1i(isShadowLoc, 0);
              gl.drawArrays(gl.TRIANGLES, 0, 6);
           } else {
-             // 3. Render Submerged Wiggle Stack
              const wiggle = Math.sin(time * 5 + fish.x * 0.05) * 0.1;
              const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle;
 
@@ -391,7 +374,7 @@ const PixelWater = () => {
 
              gl.uniformMatrix3fv(matrixLoc, false, matrix);
              gl.uniform1f(alphaLoc, 0.2);
-             gl.uniform1i(isShadowLoc, 1); // Triggers silhouette logic in fragment shader
+             gl.uniform1i(isShadowLoc, 1); 
              gl.drawArrays(gl.TRIANGLES, 0, 6);
           }
         });
@@ -409,16 +392,23 @@ const PixelWater = () => {
       applyRipple(e.clientX, e.clientY, 2000, 1); 
     };
 
+    // Custom Event Listener from React UI to trigger physics splashes
+    const handleCustomSplash = (e) => {
+      const { x, y, strength, size } = e.detail;
+      applyRipple(x, y, strength, size);
+    };
+
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('trigger-splash', handleCustomSplash);
 
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('trigger-splash', handleCustomSplash);
       cancelAnimationFrame(animationFrame);
       
-      // Cleanup WebGL pointers on unmount
       gl.deleteTexture(waterTexture);
       gl.deleteTexture(fishTexture);
       gl.deleteBuffer(positionBuffer);
