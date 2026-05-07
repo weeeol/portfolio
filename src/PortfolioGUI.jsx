@@ -345,7 +345,7 @@ const PortfolioGUI = ({ onExit }) => {
             <a href="https://github.com/weeeol/ActivityApp" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform rotate-2 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Activity App</h3>
               <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
-                Developed in C using Hash Tables, Linked Lists, and Queues to provide real-time stock lookup and order processing for small businesses.
+                Developed in Kotlin for Android, this app helps users track and manage their daily activities with a clean interface and efficient performance.
               </p>
             </a>
 
