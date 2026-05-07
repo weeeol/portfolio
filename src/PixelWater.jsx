@@ -112,6 +112,7 @@ const PixelWater = () => {
     let width, height, cols, rows;
     let current, previous, pixelData, basePixelData;
     let dampening = 0.94;
+    let isMounted = true;
 
     const waterColors = [
       [255, 255, 255], // 0: sparkling sun reflection (white)
@@ -129,7 +130,7 @@ const PixelWater = () => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    const fishTexture = gl.createTexture();
+   const fishTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, fishTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -140,6 +141,8 @@ const PixelWater = () => {
     const fishImg = new Image();
     fishImg.src = fishImgSrc;
     fishImg.onload = () => {
+      if (!isMounted) return; 
+
       gl.bindTexture(gl.TEXTURE_2D, fishTexture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fishImg);
     };
@@ -408,6 +411,8 @@ const PixelWater = () => {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('trigger-splash', handleCustomSplash);
       cancelAnimationFrame(animationFrame);
+      isMounted = false; 
+      fishImg.onload = null;
       
       gl.deleteTexture(waterTexture);
       gl.deleteTexture(fishTexture);
