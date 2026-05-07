@@ -1,6 +1,35 @@
 import React, { useEffect, useRef } from 'react';
 import fishImgSrc from './assets/Salmon.png';
 
+// Custom 3x3 Matrix Math helper to handle 2D sprite transforms in WebGL
+const m3 = {
+  projection: (width, height) => [
+    2 / width, 0, 0,
+    0, -2 / height, 0,
+    -1, 1, 1
+  ],
+  multiply: (a, b) => {
+    const a00 = a[0], a01 = a[1], a02 = a[2];
+    const a10 = a[3], a11 = a[4], a12 = a[5];
+    const a20 = a[6], a21 = a[7], a22 = a[8];
+    const b00 = b[0], b01 = b[1], b02 = b[2];
+    const b10 = b[3], b11 = b[4], b12 = b[5];
+    const b20 = b[6], b21 = b[7], b22 = b[8];
+    return [
+      b00 * a00 + b01 * a10 + b02 * a20, b00 * a01 + b01 * a11 + b02 * a21, b00 * a02 + b01 * a12 + b02 * a22,
+      b10 * a00 + b11 * a10 + b12 * a20, b10 * a01 + b11 * a11 + b12 * a21, b10 * a02 + b11 * a12 + b12 * a22,
+      b20 * a00 + b21 * a10 + b22 * a20, b20 * a01 + b21 * a11 + b22 * a21, b20 * a02 + b21 * a12 + b22 * a22,
+    ];
+  },
+  translate: (m, tx, ty) => m3.multiply(m, [1, 0, 0, 0, 1, 0, tx, ty, 1]),
+  rotate: (m, angleInRadians) => {
+    const c = Math.cos(angleInRadians);
+    const s = Math.sin(angleInRadians);
+    return m3.multiply(m, [c, -s, 0, s, c, 0, 0, 0, 1]);
+  },
+  scale: (m, sx, sy) => m3.multiply(m, [sx, 0, 0, 0, sy, 0, 0, 0, 1]),
+};
+
 const PixelWater = () => {
   const canvasRef = useRef(null);
 
@@ -8,35 +37,82 @@ const PixelWater = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    // Config
-    const scale = window.innerWidth < 768 ? 3 : 5; // Very small pixels for vast ocean
-    const yScale = 0.5; // Oblique / isometric vertical squash factor
-    let width, height;
-    let cols, rows;
+    // Initialize WebGL
+    const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
+    if (!gl) {
+      console.error('WebGL is not supported in your browser.');
+      return;
+    }
 
-    let current = [];
-    let previous = [];
-    let dampening = 0.94; // slightly less dampening for continuous ocean feel
+    // --- Shader Setup ---
+    const vertexShaderSource = `
+      attribute vec2 a_position;
+      attribute vec2 a_texCoord;
+      varying vec2 v_texCoord;
+      uniform mat3 u_matrix;
+      void main() {
+        gl_Position = vec4((u_matrix * vec3(a_position, 1)).xy, 0, 1);
+        v_texCoord = a_texCoord;
+      }
+    `;
 
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+    const fragmentShaderSource = `
+      precision mediump float;
+      uniform sampler2D u_image;
+      uniform float u_alpha;
+      uniform bool u_isShadow;
+      varying vec2 v_texCoord;
+      void main() {
+        vec4 color = texture2D(u_image, v_texCoord);
+        if (u_isShadow) {
+           gl_FragColor = vec4(0.0, 0.0, 0.0, color.a * u_alpha);
+        } else {
+           gl_FragColor = vec4(color.rgb, color.a * u_alpha);
+        }
+      }
+    `;
 
-      cols = Math.ceil(width / scale);
-      rows = Math.ceil(height / (scale * yScale));
-
-      current = new Float32Array(cols * rows).fill(0);
-      previous = new Float32Array(cols * rows).fill(0);
+    const compileShader = (type, source) => {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      return shader;
     };
 
-    window.addEventListener('resize', resize);
-    resize();
+    const program = gl.createProgram();
+    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderSource));
+    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource));
+    gl.linkProgram(program);
+    gl.useProgram(program);
 
-    // The water colors including white for sun reflections
+    // Get Locations
+    const positionLoc = gl.getAttribLocation(program, "a_position");
+    const texCoordLoc = gl.getAttribLocation(program, "a_texCoord");
+    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
+    const imageLoc = gl.getUniformLocation(program, "u_image");
+    const alphaLoc = gl.getUniformLocation(program, "u_alpha");
+    const isShadowLoc = gl.getUniformLocation(program, "u_isShadow");
+
+    // Setup Unit Quad Buffers (0 to 1)
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,0, 1,0, 0,1, 0,1, 1,0, 1,1]), gl.STATIC_DRAW);
+
+    const texCoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0,0, 1,0, 0,1, 0,1, 1,0, 1,1]), gl.STATIC_DRAW);
+
+    // Alpha Blending for Fishes
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    // --- Config & State ---
+    const scale = window.innerWidth < 768 ? 3 : 5;
+    const yScale = 0.5;
+    let width, height, cols, rows;
+    let current, previous, pixelData, basePixelData;
+    let dampening = 0.94;
+
     const waterColors = [
       [255, 255, 255], // 0: sparkling sun reflection (white)
       [28, 163, 236],  // 1: lightest blue (crest)
@@ -45,25 +121,63 @@ const PixelWater = () => {
       [0, 69, 114]     // 4: darkest depth
     ];
 
-    let animationFrame;
-    
-    const getIndex = (x, y) => x + y * cols;
+    // --- Textures ---
+    // Water Texture Map (Dynamic)
+    const waterTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, waterTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // Pixelated look
+
+    // Fish Sprite Texture
+    const fishTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, fishTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); // fallback
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
     const fishImg = new Image();
     fishImg.src = fishImgSrc;
-    
-    // Pre-render a darkened silhouette to avoid using extremely slow ctx.filter
-    const shadowCanvas = document.createElement('canvas');
-    const shadowCtx = shadowCanvas.getContext('2d', { willReadFrequently: true });
-    
     fishImg.onload = () => {
-      shadowCanvas.width = fishImg.naturalWidth;
-      shadowCanvas.height = fishImg.naturalHeight;
-      shadowCtx.drawImage(fishImg, 0, 0);
-      shadowCtx.globalCompositeOperation = 'source-in';
-      shadowCtx.fillStyle = 'black';
-      shadowCtx.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+      gl.bindTexture(gl.TEXTURE_2D, fishTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fishImg);
     };
+
+    // --- Core Logic ---
+    const resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, width, height);
+
+      cols = Math.ceil(width / scale);
+      rows = Math.ceil(height / (scale * yScale));
+
+      current = new Float32Array(cols * rows).fill(0);
+      previous = new Float32Array(cols * rows).fill(0);
+
+      pixelData = new Uint8Array(cols * rows * 4);
+      basePixelData = new Uint8Array(cols * rows * 4);
+      
+      // Pre-fill a base grid to reset via ultra-fast memory copy per frame
+      for(let k = 0; k < cols * rows; k++) {
+        const idx = k * 4;
+        basePixelData[idx] = waterColors[2][0];
+        basePixelData[idx+1] = waterColors[2][1];
+        basePixelData[idx+2] = waterColors[2][2];
+        basePixelData[idx+3] = 255;
+      }
+    };
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    let animationFrame;
+    const getIndex = (x, y) => x + y * cols;
     
     const fishes = Array.from({ length: 8 }, () => ({
       x: Math.random() * window.innerWidth,
@@ -83,9 +197,7 @@ const PixelWater = () => {
         for(let y = -size; y <= size; y++) {
           const nx = cx + x;
           const ny = cy + y;
-          // Only apply if within bounds
           if(nx > 0 && nx < cols - 1 && ny > 0 && ny < rows - 1) {
-              // Note: using += feels slightly more natural for multiple interactions
               previous[getIndex(nx, ny)] += strength; 
           }
         }
@@ -99,16 +211,14 @@ const PixelWater = () => {
     const draw = (timestamp) => {
       animationFrame = requestAnimationFrame(draw);
 
-      if (timestamp - lastFrameTime < frameDuration) {
-        return; // Skip drawing to enforce FPS limit
-      }
+      if (timestamp - lastFrameTime < frameDuration) return;
       lastFrameTime = timestamp;
 
-      // Fill base water
-      ctx.fillStyle = `rgb(${waterColors[2][0]}, ${waterColors[2][1]}, ${waterColors[2][2]})`;
-      ctx.fillRect(0, 0, width, height);
-
-      const time = Date.now() * 0.001; // Slower time for very calm water
+      // 1. CPU Water Simulation Step
+      const time = Date.now() * 0.001;
+      
+      // Fast C-level memory copy restores the deep blue base color instantly
+      pixelData.set(basePixelData);
 
       for (let j = 1; j < rows - 1; j++) {
         for (let i = 1; i < cols - 1; i++) {
@@ -124,84 +234,103 @@ const PixelWater = () => {
           current[idx] *= dampening;
 
           let val = current[idx];
-          let colorIndex = 2; // base
+          let colorIndex = 2; // Base
           let stretch = 1;
 
-          // 1. Draw Stardew-style idle lines VERY sparsely
-          // Moving from BOTTOM to TOP, broken into disjoint randomized dashes
           const wavePhase = j * 0.12 + Math.sin(i * 0.015) * 1.2 + time * 1.5;
           const lineNoise = Math.sin(wavePhase);
-          
-          // Break the lines horizontally into disjoint segments using deterministic spatial noise
           const dashBreak = Math.sin(i * 0.15 + Math.sin(j * 0.1) * 2);
           
-          // > 0.995 ensures incredibly thin lines (almost single pixel height)
           if (lineNoise > 0.995 && dashBreak > 0.3) { 
-            colorIndex = 1; // light blue lines
-            // Very short, thin disjointed dashes
+            colorIndex = 1; 
             stretch = 2 + Math.floor(Math.abs(Math.cos(i * 0.2)) * 3); 
           }
 
-          // 2. Override with interactive fluid ripples if they are strong
           if (val > 2 || val < -2) {
-            if (val > 20) { colorIndex = 0; stretch = 1; } // foam
-            else if (val > 5) { colorIndex = 1; stretch = 1; } // light blue splash
-            else if (val < -10) { colorIndex = 4; stretch = 1; } // deep splash
-            else if (val < -4) { colorIndex = 3; stretch = 1; } // med dark splash
+            if (val > 20) { colorIndex = 0; stretch = 1; }
+            else if (val > 5) { colorIndex = 1; stretch = 1; }
+            else if (val < -10) { colorIndex = 4; stretch = 1; }
+            else if (val < -4) { colorIndex = 3; stretch = 1; }
           }
 
+          // Inject color changes right into the texture map array
           if (colorIndex !== 2) {
             const c = waterColors[colorIndex];
-            ctx.fillStyle = `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
-            ctx.fillRect(i * scale, j * scale * yScale, scale * stretch, scale * yScale);
-            
-            // Skip inner loop if stretched to prevent drawing overlapping segments
-            if (stretch > 1) {
-              i += stretch - 1; 
+            for (let s = 0; s < stretch; s++) {
+              const sx = i + s;
+              if (sx >= cols) break; // Keep safely inside grid
+              const pIdx = (sx + j * cols) * 4;
+              pixelData[pIdx] = c[0];
+              pixelData[pIdx+1] = c[1];
+              pixelData[pIdx+2] = c[2];
             }
+            if (stretch > 1) i += stretch - 1; 
           }
         }
       }
 
-      // Swap buffers
+      // Swap buffer pointers
       const temp = previous;
       previous = current;
       current = temp;
 
-      // Draw Fishes!
+      // 2. WebGL Rendering Step
+      gl.clearColor(14/255, 116/255, 175/255, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      gl.enableVertexAttribArray(positionLoc);
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
+
+      gl.enableVertexAttribArray(texCoordLoc);
+      gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+      gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+
+      // --- Draw Water Quad ---
+      gl.bindTexture(gl.TEXTURE_2D, waterTexture);
+      // Pushing byte array sub-updates to the GPU is immensely faster than thousands of 2D box fills
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
+
+      let waterMatrix = m3.projection(width, height);
+      waterMatrix = m3.scale(waterMatrix, cols * scale, rows * scale * yScale);
+      
+      gl.uniformMatrix3fv(matrixLoc, false, waterMatrix);
+      gl.uniform1f(alphaLoc, 1.0);
+      gl.uniform1i(isShadowLoc, 0);
+      gl.uniform1i(imageLoc, 0); // Active Texture 0
+      
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // --- Draw Fishes ---
       if (fishImg.complete && fishImg.naturalWidth > 0) {
+        gl.bindTexture(gl.TEXTURE_2D, fishTexture);
+
         fishes.forEach(fish => {
           // Physics step
           if (fish.isJumping) {
              fish.z += fish.vz;
-             fish.vz -= 0.6; // gravity
+             fish.vz -= 0.6; // Gravity
              fish.x += fish.vx * 1.5; 
              fish.y += fish.vy * 1.5;
              
              if (fish.z <= 0) {
-               // Landing splash
                fish.z = 0;
                fish.isJumping = false;
                applyRipple(fish.x, fish.y, 900, 1);
              }
           } else {
-             // Swimming
              fish.x += fish.vx;
              fish.y += fish.vy;
              
-             // Rare jump chance (very low probability)
              if (Math.random() < 0.0005) { 
                 fish.isJumping = true;
-                fish.vz = 6 + Math.random() * 6; // jump height
-                applyRipple(fish.x, fish.y, -400, 0); // take-off splash
+                fish.vz = 6 + Math.random() * 6;
+                applyRipple(fish.x, fish.y, -400, 0); 
              }
              
-             // Smooth directional wandering
              if (Math.random() < 0.05) {
                 fish.vx += (Math.random() - 0.5) * 0.4;
                 fish.vy += (Math.random() - 0.5) * 0.4;
-                
-                // Limit speed
                 const speed = Math.hypot(fish.vx, fish.vy);
                 if (speed > 1.2) {
                   fish.vx /= speed;
@@ -210,60 +339,74 @@ const PixelWater = () => {
              }
           }
 
-          // Screen wrapping
           if (fish.x < -50) fish.x = width + 50;
           if (fish.x > width + 50) fish.x = -50;
           if (fish.y < -50) fish.y = height + 50;
           if (fish.y > height + 50) fish.y = -50;
 
           const isFacingLeft = fish.vx < 0;
-
-          ctx.save();
-          // Adjust translation for oblique perspective height when jumping
-          // Use Math.floor to prevent sub-pixel rendering jitter (vibration)
-          ctx.translate(Math.floor(fish.x), Math.floor(fish.y));
-          if (isFacingLeft) {
-             ctx.scale(-1, 1); 
-          }
-          
-          const fw = 48; // scale fish up a bit so it's visible
+          const fw = 48; 
           const fh = 48;
+          let matrix;
 
+          // Note: Standard 3x3 matrices compose backwards for vertex execution
           if (fish.isJumping) {
-             // Draw water shadow (bottom)
-             ctx.globalAlpha = 0.15;
-             ctx.drawImage(shadowCanvas, -fw/2, -fh/2, fw, fh);
+             // 1. Render Floating Shadow Stack
+             matrix = m3.projection(width, height);
+             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
+             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1); 
+             matrix = m3.translate(matrix, -fw/2, -fh/2);
+             matrix = m3.scale(matrix, fw, fh);
+
+             gl.uniformMatrix3fv(matrixLoc, false, matrix);
+             gl.uniform1f(alphaLoc, 0.15);
+             gl.uniform1i(isShadowLoc, 1);
+             gl.drawArrays(gl.TRIANGLES, 0, 6);
              
-             // Draw actual jumping fish, floating by 'z'
-             ctx.globalAlpha = 1.0;
+             // 2. Render Full Fish Stack
              const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2);
-             ctx.translate(0, -fish.z);
-             ctx.rotate(jumpAngle);
-             ctx.drawImage(fishImg, -fw/2, -fh/2, fw, fh);
+             matrix = m3.projection(width, height);
+             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
+             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
+             matrix = m3.translate(matrix, 0, -fish.z);
+             matrix = m3.rotate(matrix, jumpAngle);
+             matrix = m3.translate(matrix, -fw/2, -fh/2);
+             matrix = m3.scale(matrix, fw, fh);
+
+             gl.uniformMatrix3fv(matrixLoc, false, matrix);
+             gl.uniform1f(alphaLoc, 1.0);
+             gl.uniform1i(isShadowLoc, 0);
+             gl.drawArrays(gl.TRIANGLES, 0, 6);
           } else {
-             // Draw completely darkened fish shadow swimming under water
-             ctx.globalAlpha = 0.2;
-             // Add slight rotation wiggle while swimming - using a much slower sine wave
+             // 3. Render Submerged Wiggle Stack
              const wiggle = Math.sin(time * 5 + fish.x * 0.05) * 0.1;
-             ctx.rotate((Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle);
-             ctx.drawImage(shadowCanvas, -fw/2, -fh/2, fw, fh);
+             const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle;
+
+             matrix = m3.projection(width, height);
+             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
+             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
+             matrix = m3.rotate(matrix, angle);
+             matrix = m3.translate(matrix, -fw/2, -fh/2);
+             matrix = m3.scale(matrix, fw, fh);
+
+             gl.uniformMatrix3fv(matrixLoc, false, matrix);
+             gl.uniform1f(alphaLoc, 0.2);
+             gl.uniform1i(isShadowLoc, 1); // Triggers silhouette logic in fragment shader
+             gl.drawArrays(gl.TRIANGLES, 0, 6);
           }
-          
-          ctx.restore();
-          ctx.globalAlpha = 1.0; // Reset alpha for water drawing etc.
         });
       }
     };
 
     animationFrame = requestAnimationFrame(draw);
 
+    // --- Interactive Listeners ---
     const handlePointerMove = (e) => {
-      // Allow moving ripples even if pointer is up, for interactive feel
-      applyRipple(e.clientX, e.clientY, 150, 0); // Smaller drop for move (size 0 = 1x1 block)
+      applyRipple(e.clientX, e.clientY, 150, 0); 
     };
 
     const handlePointerDown = (e) => {
-      applyRipple(e.clientX, e.clientY, 2000, 1); // Massive splash (size 1 = 3x3 block)
+      applyRipple(e.clientX, e.clientY, 2000, 1); 
     };
 
     window.addEventListener('pointermove', handlePointerMove);
@@ -274,6 +417,13 @@ const PixelWater = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
       cancelAnimationFrame(animationFrame);
+      
+      // Cleanup WebGL pointers on unmount
+      gl.deleteTexture(waterTexture);
+      gl.deleteTexture(fishTexture);
+      gl.deleteBuffer(positionBuffer);
+      gl.deleteBuffer(texCoordBuffer);
+      gl.deleteProgram(program);
     };
   }, []);
 
