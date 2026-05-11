@@ -9,6 +9,7 @@ const App = () => {
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState('');
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Easter Egg States
   const [theme, setTheme] = useState({ bg: 'bg-slate-950', text: 'text-slate-300', accent: 'text-cyan-400' });
@@ -18,7 +19,7 @@ const App = () => {
   const [guiMode, setGuiMode] = useState(false);
 
   const availableThemes = useMemo(() => ({
-    light: { bg: 'bg-slate-50', text: 'text-slate-900', accent: 'text-indigo-600' },
+    light: { bg: 'bg-[#fdf6e3]', text: 'text-[#657b83]', accent: 'text-[#b58900]' }, // Solarized Light Retro Vibe
     cyberpunk: { bg: 'bg-purple-900', text: 'text-yellow-400', accent: 'text-pink-500' },
     dark: { bg: 'bg-slate-950', text: 'text-slate-300', accent: 'text-cyan-400' },
     hacker: { bg: 'bg-black', text: 'text-green-500', accent: 'text-emerald-400' }
@@ -28,6 +29,10 @@ const App = () => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
+
+  const handleTerminalClick = () => {
+    inputRef.current?.focus();
+  };
 
   const handleCommand = (e) => {
     if (e.key === 'Enter') {
@@ -50,6 +55,14 @@ const App = () => {
         case 'matrix':
           setShowMatrix(true);
           output = 'Initializing Matrix protocol...';
+          break;
+        case 'github':
+          window.open('https://github.com/weeeol', '_blank');
+          output = 'Opening GitHub in a new tab...';
+          break;
+        case 'linkedin':
+          window.open('https://www.linkedin.com/in/veolstevejose', '_blank');
+          output = 'Opening LinkedIn in a new tab...';
           break;
         case 'sudo':
           output = `veol-os: ${trimmedInput}: Permission denied.\nThis incident has been reported to the system administrator :) .`;
@@ -77,7 +90,7 @@ const App = () => {
           if (fileSystem[trimmedInput]) {
             output = fileSystem[trimmedInput];
           } else {
-            output = `Command not found: ${trimmedInput}. Type 'help' for available commands.`;
+            output = `Command not found: '${trimmedInput}'. Type 'help' for available commands.`;
           }
           break;
       }
@@ -102,7 +115,10 @@ const App = () => {
 
   // Otherwise, render the classic Terminal UI
   return (
-    <div className={`${theme.bg} ${theme.text} font-mono h-screen w-full p-6 overflow-y-auto sm:text-lg text-sm transition-colors duration-300`}>
+    <div 
+      className={`${theme.bg} ${theme.text} font-mono h-screen w-full p-6 overflow-y-auto sm:text-lg text-sm transition-colors duration-300 cursor-text`}
+      onClick={handleTerminalClick}
+    >
       
       {/* ASCII Welcome Header */}
       <div className="mb-8">
@@ -116,16 +132,20 @@ const App = () => {
 
       {/* Command History Map */}
       {history.map((line, index) => (
-        <div key={index} className="mb-4">
-          <div className="opacity-70">{line.command}</div>
-          <div className="whitespace-pre-wrap mt-1">{line.output}</div>
+        <div key={index} className="mb-6">
+          <div className="flex items-center">
+            <span className={`${theme.accent} mr-2 flex-shrink-0`} aria-hidden="true">{line.command.split(' ')[0]}</span>
+            <span className="opacity-90">{line.command.substring(line.command.indexOf(' ') + 1)}</span>
+          </div>
+          <div className="whitespace-pre-wrap mt-2 pl-2 border-l-2 border-opacity-30 border-current opacity-80">{line.output}</div>
         </div>
       ))}
 
       {/* Active Input Line */}
-      <div className="flex items-center">
-        <span className="opacity-70 mr-2 flex-shrink-0" aria-hidden="true">guest@veol-portfolio:~$</span>
+      <div className="flex items-center mt-4">
+        <span className={`${theme.accent} mr-2 flex-shrink-0`} aria-hidden="true">guest@veol-portfolio:~$</span>
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
