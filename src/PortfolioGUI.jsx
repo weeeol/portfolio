@@ -98,6 +98,10 @@ const PortfolioGUI = ({ onExit }) => {
   const [showName, setShowName] = useState(false);
   const [isDripping, setIsDripping] = useState(false);
   const [drops, setDrops] = useState([]);
+  
+  // Scroll Navigation State
+  const [activeSection, setActiveSection] = useState('hero');
+  const [showSideNav, setShowSideNav] = useState(false);
 
   useEffect(() => {
     const generatedDrops = Array.from({ length: 35 }).map(() => ({
@@ -169,6 +173,34 @@ const PortfolioGUI = ({ onExit }) => {
     return () => clearInterval(dripInterval);
   }, [isDripping]);
 
+  // Scroll listener for side navigation
+  const handleScroll = (e) => {
+    const scrollY = e.currentTarget.scrollTop;
+    const windowHeight = window.innerHeight;
+    
+    // Show side nav only when scrolled past 50% of the hero section
+    setShowSideNav(scrollY > windowHeight * 0.5);
+
+    // Determine active section based on scroll position
+    const sections = ['hero', 'about', 'skills', 'projects'];
+    let current = 'hero';
+    
+    for (const section of sections) {
+      const el = document.getElementById(section);
+      if (el && scrollY >= el.offsetTop - windowHeight * 0.3) {
+        current = section;
+      }
+    }
+    setActiveSection(current);
+  };
+
+  const scrollToSection = (sectionId) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-[#2d1b14] flex flex-col items-center justify-center font-mono z-[100]" style={{ fontFamily: '"Press Start 2P", system-ui' }}>
@@ -195,7 +227,8 @@ const PortfolioGUI = ({ onExit }) => {
   }
 
   return (
-    <div className="relative w-full min-h-screen font-mono text-[#5c4033] font-bold overflow-y-auto overflow-x-hidden scroll-smooth selection:bg-[#ff8c00] selection:text-white"
+    <div className="relative w-full h-screen font-mono text-[#5c4033] font-bold overflow-y-auto overflow-x-hidden scroll-smooth selection:bg-[#ff8c00] selection:text-white snap-y snap-proximity"
+         onScroll={handleScroll}
          style={{ fontFamily: '"Press Start 2P", system-ui' }}>
       
       <PixelWater />
@@ -211,17 +244,36 @@ const PortfolioGUI = ({ onExit }) => {
           }
         `}} />
 
+      {/* Side Navigation */}
+      <nav className={`fixed top-1/2 right-4 md:right-8 transform -translate-y-1/2 z-50 flex flex-col gap-6 transition-all duration-500 ${showSideNav ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}>
+        {['hero', 'about', 'skills', 'projects'].map((section) => (
+          <div key={section} className="flex items-center justify-end gap-3 group cursor-pointer" onClick={() => scrollToSection(section)}>
+            <span className={`text-[10px] md:text-xs tracking-widest uppercase transition-opacity duration-300 font-bold px-2 py-1 bg-[#4a2e1b] text-[#e6c17a] border-[3px] border-[#8b5a2b] shadow-[4px_4px_0_rgba(0,0,0,0.3)] ${activeSection === section ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+              {section}
+            </span>
+            <button
+              title={section.toUpperCase()}
+              className={`w-4 h-4 md:w-5 md:h-5 border-4 transition-all duration-300 focus:outline-none ${
+                activeSection === section 
+                  ? 'bg-[#8b5a2b] border-[#cf9e5c] scale-125 shadow-[4px_4px_0_rgba(0,0,0,0.3)]' 
+                  : 'bg-[#e6c17a] border-[#8b5a2b] group-hover:bg-[#dfbb85]'
+              }`}
+            />
+          </div>
+        ))}
+      </nav>
+
       <button 
         onClick={onExit}
-        className="fixed top-4 right-4 md:top-8 md:right-8 z-50 text-sm tracking-widest uppercase bg-[#e6c17a] border-4 border-[#8b5a2b] text-[#4a2e1b] hover:bg-[#d4a373] transition-colors duration-300 focus:outline-none rounded-sm px-4 py-2 drop-shadow-md"
+        className="fixed top-4 left-4 md:top-8 md:left-8 z-50 text-xs md:text-sm tracking-widest uppercase bg-[#e6c17a] border-4 border-[#8b5a2b] text-[#4a2e1b] hover:bg-[#d4a373] transition-colors duration-300 focus:outline-none rounded-sm px-4 py-2 drop-shadow-md"
       >
-        Exit
+        Exit GUI
       </button>
 
       {/* Section 1: Hero */}
-      <section className="w-full h-screen flex flex-col items-center justify-center p-6 bg-transparent relative">
+      <section id="hero" className="w-full min-h-screen snap-start flex flex-col items-center justify-center p-6 bg-transparent relative">
         <div className={`relative transition-all duration-[1200ms] ease-out ${showName ? 'scale-100 blur-none opacity-100 brightness-100' : 'scale-[0.4] blur-xl opacity-0 brightness-50'}`}>
-          <h1 className="text-4xl md:text-6xl lg:text-8xl tracking-widest text-[#fcd34d] drop-shadow-[8px_8px_0_rgba(0,0,0,0.5)] text-center px-4 leading-normal select-none pointer-events-none relative z-10" style={{ textShadow: "6px 6px 0px #8b5a2b, -3px -3px 0px #4a2e1b, 3px -3px 0px #4a2e1b, -3px 3px 0px #4a2e1b, 3px 3px 0px #4a2e1b" }}>
+          <h1 className="text-3xl md:text-5xl lg:text-7xl tracking-widest text-[#fcd34d] drop-shadow-[6px_6px_0_rgba(0,0,0,0.5)] text-center px-4 leading-normal select-none pointer-events-none relative z-10" style={{ textShadow: "4px 4px 0px #8b5a2b, -2px -2px 0px #4a2e1b, 2px -2px 0px #4a2e1b, -2px 2px 0px #4a2e1b, 2px 2px 0px #4a2e1b" }}>
             Veol Steve Jose
           </h1>
           
@@ -245,22 +297,16 @@ const PortfolioGUI = ({ onExit }) => {
             </div>
           )}
         </div>
-
-        <div className={`absolute bottom-16 transition-opacity duration-1000 delay-1000 ${showName ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="text-[10px] md:text-xs uppercase tracking-widest text-[#4a2e1b] bg-[#e6c17a]/95 px-6 py-3 border-4 border-[#8b5a2b] shadow-[4px_4px_0_rgba(0,0,0,0.5)] pointer-events-none animate-bounce">
-            V Scroll V
-          </div>
-        </div>
       </section>
 
       {/* Section 1.5: Inventory / About */}
-      <section className="w-full flex flex-col items-center justify-center p-6 py-20 bg-transparent min-h-screen">
-        <div className="max-w-6xl w-full bg-[#f4e2b0] border-[#8b5a2b] border-[16px] p-8 md:p-14 shadow-[16px_16px_0_rgba(0,0,0,0.5)] flex flex-col md:flex-row gap-12 relative">
-          <div className="absolute inset-0 border-[6px] border-[#cf9e5c] pointer-events-none"></div>
+      <section id="about" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
+        <div className="max-w-5xl w-full bg-[#f4e2b0] border-[#8b5a2b] border-[12px] p-6 md:p-10 shadow-[10px_10px_0_rgba(0,0,0,0.5)] flex flex-col md:flex-row gap-8 relative">
+          <div className="absolute inset-0 border-[4px] border-[#cf9e5c] pointer-events-none"></div>
 
-          <div className="w-full md:w-2/5 flex flex-col items-center justify-center gap-8 z-10 mt-4 md:mt-0">
-            <div className="w-84 h-100 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
-              <img src={profileImage} alt="Profile" className="w-full h-full object-cover object-top scale-125" />
+          <div className="w-full md:w-2/5 flex flex-col items-center justify-center gap-6 z-10 mt-4 md:mt-0">
+            <div className="w-64 h-80 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
+              <img src={profileImage} alt="Profile" className="w-full h-full object-cover object-top scale-[1.15]" />
             </div>
             <h2 className="text-xs md:text-sm text-[#4a2e1b] bg-[#dfbb85] border-[6px] border-[#8b5a2b] px-6 py-4 w-full max-w-[250px] text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">CS ENGINEER</h2>
           </div>
@@ -292,16 +338,15 @@ const PortfolioGUI = ({ onExit }) => {
       </section>
 
       {/* Section 2: Tech Arsenal */}
-     <section className="w-full flex flex-col items-center justify-center p-6 py-12 bg-transparent">
-        {/* ADDED class 'bulletin-board' here to act as the boundary anchor for the notes */}
-        <div className="bulletin-board max-w-7xl w-full text-center space-y-12 bg-[#e6c17a]/95 border-[16px] border-[#8b5a2b] p-8 md:p-16 shadow-[12px_12px_0_rgba(0,0,0,0.5)] relative">
+     <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
+        <div className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-10 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center">
           
-          <div className="absolute top-4 left-4 w-8 h-8 bg-red-600 rounded-full shadow-md border-b-4 border-red-800"></div>
-          <div className="absolute top-4 right-4 w-8 h-8 bg-blue-600 rounded-full shadow-md border-b-4 border-blue-800"></div>
+          <div className="absolute top-4 left-4 w-6 h-6 bg-red-600 rounded-full shadow-md border-b-4 border-red-800"></div>
+          <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full shadow-md border-b-4 border-blue-800"></div>
           
-          <h2 className="text-2xl md:text-3xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-4 inline-block">Bulletin Board: Skills</h2>
+          <h2 className="text-xl md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-3 inline-block mt-4">Bulletin Board: Skills</h2>
           
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-16 text-sm lg:text-base pt-12 pb-8 h-auto lg:h-[400px]">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8 text-xs lg:text-sm pt-8 pb-4 h-auto lg:h-[350px] w-full">
             <DraggableNote 
                title="Languages" 
                initialRotation={-2}
@@ -322,9 +367,9 @@ const PortfolioGUI = ({ onExit }) => {
       </section>
 
       {/* Section 3: Town Ledger */}
-      <section className="w-full flex flex-col items-center justify-start p-6 py-12 bg-transparent">
-         <div className="max-w-6xl w-full space-y-16 bg-[#fff9e6]/95 border-x-[16px] border-[#8b5a2b] p-10 shadow-[10px_10px_0_rgba(0,0,0,0.4)]">
-          <h2 className="text-2xl md:text-4xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-8 border-dashed border-[#8b5a2b] pb-6">Town Ledger: Projects</h2>
+      <section id="projects" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
+         <div className="max-w-5xl w-full space-y-12 bg-[#fff9e6]/95 border-x-[12px] border-[#8b5a2b] p-8 pb-12 shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative">
+          <h2 className="text-xl md:text-3xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-6 border-dashed border-[#8b5a2b] pb-4">Town Ledger: Projects</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
             
@@ -366,10 +411,10 @@ const PortfolioGUI = ({ onExit }) => {
           </div>
         </div>
       </section>
-
+      
       {/* Final Footer */}
-      <footer className="w-full flex items-center justify-center p-6 bg-[#4a2e1b] text-[10px] md:text-xs text-[#e6c17a] border-t-8 border-[#8b5a2b] shadow-[inset_0_4px_0_rgba(0,0,0,0.2)] mt-12">
-        <div className="w-full py-4 text-center tracking-widest leading-loose">
+      <footer className="w-full flex items-center justify-center p-2 md:p-4 bg-[#4a2e1b] text-[8px] md:text-[10px] text-[#e6c17a] border-t-4 md:border-t-8 border-[#8b5a2b] shadow-[inset_0_4px_0_rgba(0,0,0,0.2)] z-10 relative">
+        <div className="w-full text-center tracking-widest leading-loose">
           © 2026 Veol Steve Jose — made with React, Canvas, and Tailwind
         </div>
       </footer>
