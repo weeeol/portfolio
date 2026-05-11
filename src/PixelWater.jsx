@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import fishImgSrc from './assets/Salmon.png';
+import boatImgSrc from './assets/Boat1.png';
 
 // Custom 3x3 Matrix Math helper to handle 2D sprite transforms in WebGL
 const m3 = {
@@ -147,6 +148,23 @@ const PixelWater = () => {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fishImg);
     };
 
+    const boatTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, boatTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); 
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    const boatImg = new Image();
+    boatImg.src = boatImgSrc;
+    boatImg.onload = () => {
+      if (!isMounted) return; 
+
+      gl.bindTexture(gl.TEXTURE_2D, boatTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, boatImg);
+    };
+
     // --- Core Logic ---
     const resize = () => {
       width = window.innerWidth;
@@ -189,6 +207,15 @@ const PixelWater = () => {
       isJumping: false,
     }));
 
+    const boatInfo = {
+      x: -100,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      active: false,
+      timeUntilNext: 200 // initial delay
+    };
+
     const applyRipple = (clientX, clientY, strength, size) => {
       const cx = Math.floor(clientX / scale);
       const cy = Math.floor(clientY / (scale * yScale));
@@ -218,14 +245,21 @@ const PixelWater = () => {
       pixelData.set(basePixelData);
 
       for (let j = 1; j < rows - 1; j++) {
+        const j_cols = j * cols;
+        const jMinus1_cols = j_cols - cols;
+        const jPlus1_cols = j_cols + cols;
+        
+        const jPhaseBase = j * 0.12 + time * 1.5;
+        const jDashBreak = Math.sin(j * 0.1) * 2;
+
         for (let i = 1; i < cols - 1; i++) {
-          const idx = i + j * cols;
+          const idx = i + j_cols;
           
           current[idx] = (
-            previous[i - 1 + j * cols] +
-            previous[i + 1 + j * cols] +
-            previous[i + (j - 1) * cols] +
-            previous[i + (j + 1) * cols]
+            previous[i - 1 + j_cols] +
+            previous[i + 1 + j_cols] +
+            previous[i + jMinus1_cols] +
+            previous[i + jPlus1_cols]
           ) / 2 - current[idx];
 
           current[idx] *= dampening;
@@ -234,9 +268,9 @@ const PixelWater = () => {
           let colorIndex = 2;
           let stretch = 1;
 
-          const wavePhase = j * 0.12 + Math.sin(i * 0.015) * 1.2 + time * 1.5;
+          const wavePhase = jPhaseBase + Math.sin(i * 0.015) * 1.2;
           const lineNoise = Math.sin(wavePhase);
-          const dashBreak = Math.sin(i * 0.15 + Math.sin(j * 0.1) * 2);
+          const dashBreak = Math.sin(i * 0.15 + jDashBreak);
           
           if (lineNoise > 0.995 && dashBreak > 0.3) { 
             colorIndex = 1; 
@@ -382,6 +416,73 @@ const PixelWater = () => {
           }
         });
       }
+
+      if (boatImg.complete && boatImg.naturalWidth > 0) {
+        gl.bindTexture(gl.TEXTURE_2D, boatTexture);
+
+        if (!boatInfo.active) {
+           boatInfo.timeUntilNext--;
+           if (boatInfo.timeUntilNext <= 0) {
+              boatInfo.active = true;
+              boatInfo.y = 100 + Math.random() * (height - 200);
+              boatInfo.vx = 1.5 + Math.random() * 1.5;
+              boatInfo.vy = (Math.random() - 0.5) * 0.8;
+              if (Math.random() > 0.5) {
+                 boatInfo.x = width + 100;
+                 boatInfo.vx = -boatInfo.vx;
+              } else {
+                 boatInfo.x = -100;
+              }
+           }
+        } else {
+           boatInfo.x += boatInfo.vx;
+           boatInfo.y += boatInfo.vy;
+           
+           // Apply a constant ripple at the boat's center.
+           // The simulation automatically propagates this outwards locally creating a V-shaped wake!
+           applyRipple(boatInfo.x - (boatInfo.vx * 15), boatInfo.y, 400, 0);
+           applyRipple(boatInfo.x, boatInfo.y, 150, 0);
+
+           if (boatInfo.x > width + 200 || boatInfo.x < -200 || boatInfo.y < -200 || boatInfo.y > height + 200) {
+              boatInfo.active = false;
+              boatInfo.timeUntilNext = 300 + Math.random() * 600; 
+           }
+
+           const isFacingLeft = boatInfo.vx < 0;
+           // Maintain original aspect ratio and scale it to a reasonable size
+           const targetWidth = 80;
+           const aspectRatio = boatImg.naturalHeight / boatImg.naturalWidth;
+           const bw = targetWidth; 
+           const bh = targetWidth * aspectRatio;
+           const angle = Math.atan2(boatInfo.vy, Math.abs(boatInfo.vx));
+
+           // Draw Boat Shadow
+           let matrix = m3.projection(width, height);
+           matrix = m3.translate(matrix, Math.floor(boatInfo.x), Math.floor(boatInfo.y) + 10);
+           if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
+           matrix = m3.rotate(matrix, angle);
+           matrix = m3.translate(matrix, -bw/2, -bh/2);
+           matrix = m3.scale(matrix, bw, bh);
+
+           gl.uniformMatrix3fv(matrixLoc, false, matrix);
+           gl.uniform1f(alphaLoc, 0.3);
+           gl.uniform1i(isShadowLoc, 1); 
+           gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+           // Draw Boat
+           matrix = m3.projection(width, height);
+           matrix = m3.translate(matrix, Math.floor(boatInfo.x), Math.floor(boatInfo.y));
+           if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
+           matrix = m3.rotate(matrix, angle);
+           matrix = m3.translate(matrix, -bw/2, -bh/2);
+           matrix = m3.scale(matrix, bw, bh);
+
+           gl.uniformMatrix3fv(matrixLoc, false, matrix);
+           gl.uniform1f(alphaLoc, 1.0);
+           gl.uniform1i(isShadowLoc, 0); 
+           gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+      }
     };
 
     animationFrame = requestAnimationFrame(draw);
@@ -413,9 +514,11 @@ const PixelWater = () => {
       cancelAnimationFrame(animationFrame);
       isMounted = false; 
       fishImg.onload = null;
+      boatImg.onload = null;
       
       gl.deleteTexture(waterTexture);
       gl.deleteTexture(fishTexture);
+      gl.deleteTexture(boatTexture);
       gl.deleteBuffer(positionBuffer);
       gl.deleteBuffer(texCoordBuffer);
       gl.deleteProgram(program);
