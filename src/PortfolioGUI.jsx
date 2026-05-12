@@ -339,7 +339,7 @@ const PortfolioGUI = ({ onExit }) => {
 
       {/* Section 2: Tech Arsenal */}
      <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
-        <div className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-10 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center">
+        <div className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-15 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center">
           
           <div className="absolute top-4 left-4 w-6 h-6 bg-red-600 rounded-full shadow-md border-b-4 border-red-800"></div>
           <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full shadow-md border-b-4 border-blue-800"></div>

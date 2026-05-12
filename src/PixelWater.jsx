@@ -201,7 +201,7 @@ const PixelWater = () => {
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8,
+      vy: 0,
       z: 0,
       vz: 0,
       isJumping: false,
@@ -354,11 +354,9 @@ const PixelWater = () => {
              
              if (Math.random() < 0.05) {
                 fish.vx += (Math.random() - 0.5) * 0.4;
-                fish.vy += (Math.random() - 0.5) * 0.4;
-                const speed = Math.hypot(fish.vx, fish.vy);
+                const speed = Math.abs(fish.vx);
                 if (speed > 1.2) {
-                  fish.vx /= speed;
-                  fish.vy /= speed;
+                  fish.vx = (fish.vx / speed) * 1.2;
                 }
              }
           }
@@ -385,7 +383,8 @@ const PixelWater = () => {
              gl.uniform1i(isShadowLoc, 1);
              gl.drawArrays(gl.TRIANGLES, 0, 6);
              
-             const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2);
+             const imgOffset = Math.PI / 2; // Assuming Salmon.png points UP
+             const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2) + imgOffset;
              matrix = m3.projection(width, height);
              matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
              if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
@@ -400,7 +399,9 @@ const PixelWater = () => {
              gl.drawArrays(gl.TRIANGLES, 0, 6);
           } else {
              const wiggle = Math.sin(time * 5 + fish.x * 0.05) * 0.1;
-             const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle;
+             // Add Math.PI / 2 if the image points UP by default, or just use wiggle if we want it strictly horizontal
+             const imgOffset = Math.PI / 2; // Assuming Salmon.png points UP
+             const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle + imgOffset;
 
              matrix = m3.projection(width, height);
              matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
