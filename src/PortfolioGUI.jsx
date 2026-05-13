@@ -102,6 +102,16 @@ const PortfolioGUI = ({ onExit }) => {
   // Scroll Navigation State
   const [activeSection, setActiveSection] = useState('hero');
   const [showSideNav, setShowSideNav] = useState(false);
+  
+  // Retro Taskbar Time state
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(clockInterval);
+  }, []);
 
   useEffect(() => {
     const generatedDrops = Array.from({ length: 35 }).map(() => ({
@@ -263,15 +273,8 @@ const PortfolioGUI = ({ onExit }) => {
         ))}
       </nav>
 
-      <button 
-        onClick={onExit}
-        className="fixed top-4 left-4 md:top-8 md:left-8 z-50 text-xs md:text-sm tracking-widest uppercase bg-[#e6c17a] border-4 border-[#8b5a2b] text-[#4a2e1b] hover:bg-[#d4a373] transition-colors duration-300 focus:outline-none rounded-sm px-4 py-2 drop-shadow-md"
-      >
-        Exit GUI
-      </button>
-
       {/* Section 1: Hero */}
-      <section id="hero" className="w-full min-h-screen snap-start flex flex-col items-center justify-center p-6 bg-transparent relative">
+      <section id="hero" className="w-full min-h-screen snap-start flex flex-col items-center justify-center p-6 bg-transparent relative pb-20">
         <div className={`relative transition-all duration-[1200ms] ease-out ${showName ? 'scale-100 blur-none opacity-100 brightness-100' : 'scale-[0.4] blur-xl opacity-0 brightness-50'}`}>
           <h1 className="text-3xl md:text-5xl lg:text-7xl tracking-widest text-[#fcd34d] drop-shadow-[6px_6px_0_rgba(0,0,0,0.5)] text-center px-4 leading-normal select-none pointer-events-none relative z-10" style={{ textShadow: "4px 4px 0px #8b5a2b, -2px -2px 0px #4a2e1b, 2px -2px 0px #4a2e1b, -2px 2px 0px #4a2e1b, 2px 2px 0px #4a2e1b" }}>
             Veol Steve Jose
@@ -413,11 +416,35 @@ const PortfolioGUI = ({ onExit }) => {
       </section>
       
       {/* Final Footer */}
-      <footer className="w-full flex items-center justify-center p-2 md:p-4 bg-[#4a2e1b] text-[8px] md:text-[10px] text-[#e6c17a] border-t-4 md:border-t-8 border-[#8b5a2b] shadow-[inset_0_4px_0_rgba(0,0,0,0.2)] z-10 relative">
+      <footer className="w-full flex items-center justify-center p-2 md:p-4 bg-[#4a2e1b] text-[8px] md:text-[10px] text-[#e6c17a] border-t-4 md:border-t-8 border-[#8b5a2b] shadow-[inset_0_4px_0_rgba(0,0,0,0.2)] z-10 relative pb-16">
         <div className="w-full text-center tracking-widest leading-loose">
           © 2026 Veol Steve Jose — made with React, Canvas, and Tailwind
         </div>
       </footer>
+      
+      {/* 8-bit Taskbar Dropdown (Hover Area) */}
+      <div className="fixed top-0 left-0 right-0 h-[60px] z-50 group">
+        <div className="absolute top-0 left-0 right-0 h-12 md:h-14 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] flex items-center justify-between px-2 md:px-4 -translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          {/* Start Button / Terminal Access */}
+          <button 
+            onClick={onExit}
+            className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1">Terminal</span>
+          </button>
+
+          {/* System Tray (Clock) */}
+          <div className="h-8 md:h-10 px-3 bg-[#cf9e5c] border-2 md:border-4 border-t-4 md:border-t-[6px] border-l-4 md:border-l-[6px] border-[#8b5a2b] shadow-inner flex items-center justify-center text-[#4a2e1b]">
+            <span className="text-[10px] md:text-xs tracking-widest drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)] mt-1">
+              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );
