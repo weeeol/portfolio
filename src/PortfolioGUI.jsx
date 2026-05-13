@@ -414,7 +414,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
             <polyline points="4 17 10 11 4 5"></polyline>
             <line x1="12" y1="19" x2="20" y2="19"></line>
           </svg>
-          <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1 hidden sm:block"></span>
+          <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1 hidden sm:block">Terminal</span>
         </button>
 
         {/* Section Navigation Links */}

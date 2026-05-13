@@ -496,15 +496,18 @@ const PixelWater = ({ isPaused = false }) => {
 
     // --- Interactive Listeners ---
     const handlePointerMove = (e) => {
+      if (isPausedRef.current) return;
       applyRipple(e.clientX, e.clientY, 150, 0); 
     };
 
     const handlePointerDown = (e) => {
+      if (isPausedRef.current) return;
       applyRipple(e.clientX, e.clientY, 2000, 1); 
     };
 
     // Custom Event Listener from React UI to trigger physics splashes
     const handleCustomSplash = (e) => {
+      if (isPausedRef.current) return;
       const { x, y, strength, size } = e.detail;
       applyRipple(x, y, strength, size);
     };
