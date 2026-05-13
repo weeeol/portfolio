@@ -48,8 +48,7 @@ const App = () => {
           setHistory([]);
           setInput('');
           return;
-        case 'startx':
-        case 'launch':
+        case 'exit':
           setGuiMode(true);
           return;
         case 'matrix':
@@ -126,7 +125,7 @@ const App = () => {
           {asciiArt}
         </pre>
         <div className={`${theme.accent} mt-4 whitespace-pre-wrap`}>
-          {`Welcome to the terminal.\nType 'help' to see available commands.\nTip: Type 'startx' to launch the interactive graphical environment.`}
+          {`Welcome to the terminal.\nType 'help' to see available commands.\nTip: Try 'theme light' or 'theme cyberpunk' for a surprise!`}
         </div>
       </div>
 
