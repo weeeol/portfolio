@@ -254,25 +254,6 @@ const PortfolioGUI = ({ onExit }) => {
           }
         `}} />
 
-      {/* Side Navigation */}
-      <nav className={`fixed top-1/2 right-4 md:right-8 transform -translate-y-1/2 z-50 flex flex-col gap-6 transition-all duration-500 ${showSideNav ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10 pointer-events-none'}`}>
-        {['hero', 'about', 'skills', 'projects'].map((section) => (
-          <div key={section} className="flex items-center justify-end gap-3 group cursor-pointer" onClick={() => scrollToSection(section)}>
-            <span className={`text-[10px] md:text-xs tracking-widest uppercase transition-opacity duration-300 font-bold px-2 py-1 bg-[#4a2e1b] text-[#e6c17a] border-[3px] border-[#8b5a2b] shadow-[4px_4px_0_rgba(0,0,0,0.3)] ${activeSection === section ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-              {section}
-            </span>
-            <button
-              title={section.toUpperCase()}
-              className={`w-4 h-4 md:w-5 md:h-5 border-4 transition-all duration-300 focus:outline-none ${
-                activeSection === section 
-                  ? 'bg-[#8b5a2b] border-[#cf9e5c] scale-125 shadow-[4px_4px_0_rgba(0,0,0,0.3)]' 
-                  : 'bg-[#e6c17a] border-[#8b5a2b] group-hover:bg-[#dfbb85]'
-              }`}
-            />
-          </div>
-        ))}
-      </nav>
-
       {/* Section 1: Hero */}
       <section id="hero" className="w-full min-h-screen snap-start flex flex-col items-center justify-center p-6 bg-transparent relative pb-20">
         <div className={`relative transition-all duration-[1200ms] ease-out ${showName ? 'scale-100 blur-none opacity-100 brightness-100' : 'scale-[0.4] blur-xl opacity-0 brightness-50'}`}>
@@ -422,27 +403,42 @@ const PortfolioGUI = ({ onExit }) => {
         </div>
       </footer>
       
-      {/* 8-bit Taskbar Dropdown (Hover Area) */}
-      <div className="fixed top-0 left-0 right-0 h-[60px] z-50 group">
-        <div className="absolute top-0 left-0 right-0 h-12 md:h-14 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] flex items-center justify-between px-2 md:px-4 -translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-          {/* Start Button / Terminal Access */}
-          <button 
-            onClick={onExit}
-            className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">
-              <polyline points="4 17 10 11 4 5"></polyline>
-              <line x1="12" y1="19" x2="20" y2="19"></line>
-            </svg>
-            <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1">Terminal</span>
-          </button>
+      {/* 8-bit Top Taskbar */}
+      <div className="fixed top-0 left-0 right-0 h-12 md:h-14 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] z-50 flex items-center justify-between px-2 md:px-4">
+        {/* Start Button / Terminal Access */}
+        <button 
+          onClick={onExit}
+          className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1 hidden sm:block"></span>
+        </button>
 
-          {/* System Tray (Clock) */}
-          <div className="h-8 md:h-10 px-3 bg-[#cf9e5c] border-2 md:border-4 border-t-4 md:border-t-[6px] border-l-4 md:border-l-[6px] border-[#8b5a2b] shadow-inner flex items-center justify-center text-[#4a2e1b]">
-            <span className="text-[10px] md:text-xs tracking-widest drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)] mt-1">
-              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </span>
-          </div>
+        {/* Section Navigation Links */}
+        <nav className="flex items-center gap-2 md:gap-4 lg:gap-6">
+          {['hero', 'about', 'skills', 'projects'].map((section) => (
+            <button
+              key={section}
+              onClick={() => scrollToSection(section)}
+              className={`text-[10px] md:text-[12px] tracking-widest uppercase px-3 py-1.5 md:px-4 md:py-2 transition-all duration-200 border-2 md:border-[3px] ${
+                activeSection === section 
+                  ? 'bg-[#8b5a2b] text-[#e6c17a] border-[#4a2e1b] shadow-inner font-bold' 
+                  : 'bg-transparent text-[#4a2e1b] border-transparent hover:bg-[#dfbb85] hover:border-[#8b5a2b]'
+              }`}
+            >
+              {section}
+            </button>
+          ))}
+        </nav>
+
+        {/* System Tray (Clock) */}
+        <div className="h-8 md:h-10 px-3 bg-[#cf9e5c] border-2 md:border-4 border-t-4 md:border-t-[6px] border-l-4 md:border-l-[6px] border-[#8b5a2b] shadow-inner flex items-center justify-center text-[#4a2e1b] hidden sm:flex">
+          <span className="text-[10px] md:text-xs tracking-widest drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)] mt-1">
+            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+          </span>
         </div>
       </div>
       </div>
