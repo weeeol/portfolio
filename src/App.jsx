@@ -5,7 +5,7 @@ import StartupIntro from './StartupIntro';
 import { asciiArt, fileSystem } from './data/commands';
 
 const App = () => {
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState('');
   const bottomRef = useRef(null);
@@ -16,7 +16,7 @@ const App = () => {
   const [showMatrix, setShowMatrix] = useState(false);
   
   // The master switch for the Graphical UI
-  const [guiMode, setGuiMode] = useState(false);
+  const [guiMode, setGuiMode] = useState(true);
 
   const availableThemes = useMemo(() => ({
     light: { bg: 'bg-[#fdf6e3]', text: 'text-[#657b83]', accent: 'text-[#b58900]' }, // Solarized Light Retro Vibe
