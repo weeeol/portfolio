@@ -89,7 +89,7 @@ const DraggableNote = ({ title, content, initialRotation }) => {
   );
 };
 
-const PortfolioGUI = ({ onExit }) => {
+const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("Loading");
   const [subText, setSubText] = useState("Generating world...");
@@ -241,7 +241,7 @@ const PortfolioGUI = ({ onExit }) => {
          onScroll={handleScroll}
          style={{ fontFamily: '"Press Start 2P", system-ui' }}>
       
-      <PixelWater />
+      <PixelWater isPaused={isTerminalOpen} />
 
       <div className="relative z-10">
         <style dangerouslySetInnerHTML={{__html: `
@@ -407,7 +407,7 @@ const PortfolioGUI = ({ onExit }) => {
       <div className="fixed top-0 left-0 right-0 h-12 md:h-14 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] z-50 flex items-center justify-between px-2 md:px-4">
         {/* Start Button / Terminal Access */}
         <button 
-          onClick={onExit}
+          onClick={onToggleTerminal}
           className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
         >
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import PortfolioGUI from './PortfolioGUI';
+import TerminalWindow from './TerminalWindow';
 import MatrixRain from './MatrixRain';
 import StartupIntro from './StartupIntro';
 import { asciiArt, fileSystem } from './data/commands';
@@ -15,8 +16,8 @@ const App = () => {
   const [theme, setTheme] = useState({ bg: 'bg-slate-950', text: 'text-slate-300', accent: 'text-cyan-400' });
   const [showMatrix, setShowMatrix] = useState(false);
   
-  // The master switch for the Graphical UI
-  const [guiMode, setGuiMode] = useState(true);
+  // The master switch for the Terminal Window overlay inside the GUI
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
   const availableThemes = useMemo(() => ({
     light: { bg: 'bg-[#fdf6e3]', text: 'text-[#657b83]', accent: 'text-[#b58900]' }, // Solarized Light Retro Vibe
@@ -49,7 +50,7 @@ const App = () => {
           setInput('');
           return;
         case 'exit':
-          setGuiMode(true);
+          setIsTerminalOpen(false);
           return;
         case 'matrix':
           setShowMatrix(true);
@@ -108,59 +109,26 @@ const App = () => {
     return <MatrixRain onExit={() => setShowMatrix(false)} />;
   }
 
-  if (guiMode) {
-    return <PortfolioGUI onExit={() => setGuiMode(false)} />;
-  }
-
-  // Otherwise, render the classic Terminal UI
   return (
-    <div 
-      className={`${theme.bg} ${theme.text} font-mono h-screen w-full p-6 overflow-y-auto sm:text-lg text-sm transition-colors duration-300 cursor-text`}
-      onClick={handleTerminalClick}
-    >
+    <>
+      <PortfolioGUI 
+        onToggleTerminal={() => setIsTerminalOpen(prev => !prev)} 
+        isTerminalOpen={isTerminalOpen}
+      />
       
-      {/* ASCII Welcome Header */}
-      <div className="mb-8">
-        <pre className={`${theme.accent} font-bold leading-tight`}>
-          {asciiArt}
-        </pre>
-        <div className={`${theme.accent} mt-4 whitespace-pre-wrap`}>
-          {`Welcome to the terminal.\nType 'help' to see available commands.\nTip: Try 'theme light' or 'theme cyberpunk' for a surprise!`}
-        </div>
-      </div>
-
-      {/* Command History Map */}
-      {history.map((line, index) => (
-        <div key={index} className="mb-6">
-          <div className="flex items-center">
-            <span className={`${theme.accent} mr-2 flex-shrink-0`} aria-hidden="true">{line.command.split(' ')[0]}</span>
-            <span className="opacity-90">{line.command.substring(line.command.indexOf(' ') + 1)}</span>
-          </div>
-          <div className="whitespace-pre-wrap mt-2 pl-2 border-l-2 border-opacity-30 border-current opacity-80">{line.output}</div>
-        </div>
-      ))}
-
-      {/* Active Input Line */}
-      <div className="flex items-center mt-4">
-        <span className={`${theme.accent} mr-2 flex-shrink-0`} aria-hidden="true">guest@veol-portfolio:~$</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleCommand}
-          className={`bg-transparent ${theme.text} outline-none flex-grow w-full`}
-          style={{ caretColor: 'currentColor' }}
-          autoFocus
-          spellCheck="false"
-          autoComplete="off"
-          aria-label="Terminal user input"
+      {isTerminalOpen && (
+        <TerminalWindow 
+          history={history}
+          input={input}
+          setInput={setInput}
+          handleCommand={handleCommand}
+          inputRef={inputRef}
+          bottomRef={bottomRef}
+          theme={theme}
+          onClose={() => setIsTerminalOpen(false)}
         />
-      </div>
-      
-      {/* Invisible div to anchor the auto-scroll */}
-      <div ref={bottomRef} className="pb-10" />
-    </div>
+      )}
+    </>
   );
 };
 

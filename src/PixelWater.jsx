@@ -31,8 +31,13 @@ const m3 = {
   scale: (m, sx, sy) => m3.multiply(m, [sx, 0, 0, 0, sy, 0, 0, 0, 1]),
 };
 
-const PixelWater = () => {
+const PixelWater = ({ isPaused = false }) => {
   const canvasRef = useRef(null);
+  const isPausedRef = useRef(isPaused);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -238,6 +243,7 @@ const PixelWater = () => {
     const draw = (timestamp) => {
       animationFrame = requestAnimationFrame(draw);
 
+      if (isPausedRef.current) return; // Skip updating physics/drawing when paused
       if (timestamp - lastFrameTime < frameDuration) return;
       lastFrameTime = timestamp;
 
