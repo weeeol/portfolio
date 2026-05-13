@@ -1,22 +1,20 @@
-# Terminal Portfolio
+# 8-Bit RPG-Style Portfolio
 
-A terminal-themed personal portfolio built with React, Vite, and Tailwind CSS. The app opens with a boot-style intro, then drops into a retro command-line experience with an optional graphical portfolio mode, animated effects, and project highlights.
+A unique, retro-themed personal portfolio built with React, Vite, and Tailwind CSS. The app features an interactive 8-bit RPG-style Graphical User Interface (GUI) driven by WebGL and CSS scroll snapping, with a fully functional retro command-line terminal hidden as an easter egg for those who explore!
 
 ## Features
 
-- Boot sequence intro with skip support
-- Interactive terminal UI with command history
-- Commands for `whoami`, `skills`, `projects`, `help`, `clear`, `theme`, `matrix`, and `startx`
-- Graphical portfolio mode with a full-screen space exploration scene
-- Matrix-style visual effect for the terminal view
-- Responsive layout and custom styling built for a portfolio presentation
+- **8-Bit Graphical GUI**: Includes CSS `snap-y` scrolling, a dynamic spy-scroll side navigation, and a hidden top taskbar with a live system clock.
+- **WebGL Backgrounds**: Uses a custom 2D/3D WebGL background (`PixelWater`) with sprite kinematics.
+- **Immersive Boot Sequence**: An authentic, skip-able boot sequence (`StartupIntro`) that sets the retro mood before dropping you into the GUI.
+- **Hidden Terminal Easter Egg**: By accessing the top taskbar, you can dive into a secret terminal featuring command history, system stats, Matrix code-rain, and multiple unlockable themes (`cyberpunk`, `hacker`, etc.).
 
 ## Tech Stack
 
 - React 19
 - Vite
-- Tailwind CSS 4
-- Canvas-based animations
+- Tailwind CSS v4
+- Raw WebGL / HTML5 Canvas
 
 ## Getting Started
 
@@ -44,20 +42,15 @@ Preview the production build:
 npm run preview
 ```
 
-Run linting:
-
-```bash
-npm run lint
-```
-
 ## Project Structure
 
-- `src/App.jsx` handles the terminal experience and app flow
-- `src/StartupIntro.jsx` renders the boot screen
-- `src/PortfolioGUI.jsx` renders the graphical portfolio mode
-- `src/MatrixRain.jsx` provides the matrix animation effect
-- `src/index.css` contains global styling
+- `src/App.jsx` — Entry point, state router, and the engine for the hidden Terminal easter egg.
+- `src/PortfolioGUI.jsx` — The main 8-bit graphical mode featuring CSS scroll snapping and the top taskbar.
+- `src/PixelWater.jsx` — Raw WebGL background with animated sprites adjusting to canvas matrices.
+- `src/StartupIntro.jsx` — Renders the classic CLI boot sequence screen.
+- `src/MatrixRain.jsx` — Provides the canvas-based matrix digital rain effect.
+- `src/data/commands.js` — Centralized dictionary for terminal commands and outputs.
 
 ## Notes
 
-The portfolio is designed to feel like a fictional operating system while still presenting real projects, skills, and contact links.
+Designed to emulate a customized vintage operating system (Veol-OS) while still effectively presenting real projects, skills, and contact links through modern web technologies.
