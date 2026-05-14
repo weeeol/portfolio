@@ -502,7 +502,46 @@ const PixelWater = ({ isPaused = false }) => {
 
     const handlePointerDown = (e) => {
       if (isPausedRef.current) return;
-      applyRipple(e.clientX, e.clientY, 2000, 1); 
+      const cx = e.clientX;
+      const cy = e.clientY;
+      
+      let hitSomething = false;
+
+      // 1. Check if clicked on the boat
+      if (boatInfo.active) {
+        const dist = Math.hypot(boatInfo.x - cx, boatInfo.y - cy);
+        if (dist < 60) {
+          hitSomething = true;
+          // Boat goes into overdrive and creates a massive splash
+          boatInfo.vx *= 2.5;
+          applyRipple(boatInfo.x, boatInfo.y, 5000, 2);
+        }
+      }
+
+      // 2. Check if clicked on fishes
+      if (!hitSomething) {
+        for (const fish of fishes) {
+          const dist = Math.hypot(fish.x - cx, fish.y - cy);
+          // If clicked close to a fish that isn't already jumping
+          if (dist < 40 && !fish.isJumping) {
+            hitSomething = true;
+            fish.isJumping = true;
+            fish.vz = 8 + Math.random() * 5; // Launch into the air
+            
+            // Swim frantically away from the click
+            fish.vx = (fish.x - cx) * 0.2;
+            fish.vy = (fish.y - cy) * 0.2;
+            
+            applyRipple(fish.x, fish.y, 1500, 1);
+            break; // Stop checking after hitting one fish
+          }
+        }
+      }
+
+      // 3. Just a regular water ripple if nothing was hit
+      if (!hitSomething) {
+        applyRipple(cx, cy, 2000, 1);
+      }
     };
 
     // Custom Event Listener from React UI to trigger physics splashes

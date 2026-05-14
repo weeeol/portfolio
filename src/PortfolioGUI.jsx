@@ -103,6 +103,15 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
   const [activeSection, setActiveSection] = useState('hero');
   const [showSideNav, setShowSideNav] = useState(false);
   
+  // Mail copied state
+  const [showCopied, setShowCopied] = useState(false);
+  const handleCopyEmail = (e) => {
+    e.preventDefault();
+    navigator.clipboard.writeText("veolstevejose@gmail.com");
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
+
   // Retro Taskbar Time state
   const [time, setTime] = useState(new Date());
 
@@ -309,9 +318,18 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
               <a href="https://github.com/weeeol" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
                  <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
               </a>
-              <a href="mailto:veolstevejose@gmail.com" className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
-                 <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              </a>
+              
+              <div className="relative aspect-square">
+                <button onClick={handleCopyEmail} className="w-full h-full bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none cursor-pointer">
+                  <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </button>
+                {showCopied && (
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#4a2e1b] text-[#e6c17a] text-xs px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none animate-fade-in-up">
+                    Copied!
+                  </div>
+                )}
+              </div>
+
               <a href="https://www.linkedin.com/in/veolstevejose" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
                  <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
@@ -334,7 +352,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
             <DraggableNote 
                title="Languages" 
                initialRotation={-2}
-               content="C, C++, C#, Java, Python <br/>JavaScript, React, Kotlin, Lua <br/>HTML5, CSS3, Bash Script" 
+               content="C, C++, C#, Java, Python <br/>JavaScript, React, Kotlin, Lua <br/>HTML, CSS, Bash Script" 
             />
             <DraggableNote 
                title="Game Dev & Design" 
@@ -344,7 +362,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
             <DraggableNote 
                title="Tools & Frameworks" 
                initialRotation={-1}
-               content="Node.js, Next.js, FastAPI, Qt <br/>SQLite, MySQL, CMake, NPM <br/>Vercel, Render, Raspberry Pi, LaTeX" 
+               content="Node.js, Next.js, FastAPI, Qt <br/>SQLite, MySQL, CMake, NPM <br/>Vercel, Render, Raspberry Pi, LaTeX, Git, Linux" 
             />
           </div>
         </div>
@@ -355,37 +373,37 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
          <div className="max-w-5xl w-full space-y-12 bg-[#fff9e6]/95 border-x-[12px] border-[#8b5a2b] p-8 pb-12 shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative">
           <h2 className="text-xl md:text-3xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-6 border-dashed border-[#8b5a2b] pb-4">Town Ledger: Projects</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
+          <div className="flex flex-col gap-y-12">
             
-            <a href="https://github.com/weeeol/Flowmake" target="_blank" rel="noreferrer" className="md:col-span-2 block space-y-4 group cursor-pointer text-center bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform rotate-1 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+            <a href="https://github.com/weeeol/Flowmake" target="_blank" rel="noreferrer" className="block space-y-4 group cursor-pointer text-center bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-xl md:text-2xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Flowmake</h3>
               <p className="text-xs md:text-sm lg:text-base text-[#4a2e1b] max-w-2xl mx-auto leading-relaxed md:leading-loose">
                 Full-stack application that automatically converts Python source code into modern, professional flowcharts by parsing the Abstract Syntax Tree (AST).
               </p>
             </a>
 
-            <a href="https://github.com/vinish-dev/WinterHackathon-NoLatency" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform -rotate-1 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+            <a href="https://github.com/vinish-dev/WinterHackathon-NoLatency" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">ExplainIt</h3>
               <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
                 Static analysis and AI tool that explains code functionality and breaking points without ever modifying or uploading the source code.
               </p>
             </a>
 
-            <a href="https://github.com/weeeol/ActivityApp" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform rotate-2 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+            <a href="https://github.com/weeeol/ActivityApp" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Activity App</h3>
               <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
                 Developed in Kotlin for Android, this app helps users track and manage their daily activities with a clean interface and efficient performance.
               </p>
             </a>
 
-            <a href="https://github.com/weeeol/ProtoPlay" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform -rotate-2 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+            <a href="https://github.com/weeeol/ProtoPlay" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">ProtoPlay</h3>
               <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
                 An experimental game project built with Pygame, serving as a foundation for testing mechanics, sprite movement, and input handling.
               </p>
             </a>
 
-            <a href="https://github.com/weeeol/Text_Editor" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform rotate-1 hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+            <a href="https://github.com/weeeol/Text_Editor" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
               <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Text Editor</h3>
               <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
                 A lightweight desktop text editor engineered with Python and Tkinter, supporting rapid file operations and editing.
