@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import profileImage from './assets/Profile.png';
+import woodTexture from './assets/wood.png';
+import paperTexture from './assets/paper1.png';
 import PixelWater from './PixelWater';
 
 const DraggableNote = ({ title, content, initialRotation }) => {
@@ -78,7 +80,10 @@ const DraggableNote = ({ title, content, initialRotation }) => {
         cursor: isDragging ? 'grabbing' : 'grab',
         zIndex: isDragging ? 50 : 10,
         touchAction: 'none',
-        transition: isDragging ? 'none' : 'transform 0.15s ease-out'
+        transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+        backgroundImage: `url(${paperTexture})`,
+        backgroundSize: 'cover',
+        backgroundBlendMode: 'multiply'
       }}
       className="bg-[#fff9e6] p-6 border-4 border-[#cf9e5c] shadow-lg flex-1 hover:z-20 select-none pointer-events-auto relative"
     >
@@ -341,7 +346,10 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
 
       {/* Section 2: Tech Arsenal */}
      <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
-        <div className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-15 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center">
+        <div 
+          className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-15 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center"
+          style={{ backgroundImage: `url(${woodTexture})`, backgroundSize: 'cover', backgroundBlendMode: 'multiply' }}
+        >
           
           <div className="absolute top-4 left-4 w-6 h-6 bg-red-600 rounded-full shadow-md border-b-4 border-red-800"></div>
           <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full shadow-md border-b-4 border-blue-800"></div>

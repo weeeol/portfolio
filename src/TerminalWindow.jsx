@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { asciiArt } from './data/commands';
+import MatrixRain from './MatrixRain';
 
 const TerminalWindow = ({ 
   history, 
@@ -9,7 +10,9 @@ const TerminalWindow = ({
   inputRef, 
   bottomRef, 
   theme, 
-  onClose 
+  onClose,
+  showMatrix,
+  setShowMatrix
 }) => {
   const [position, setPosition] = useState({ x: 50, y: 50 });
   const [isDragging, setIsDragging] = useState(false);
@@ -125,6 +128,11 @@ const TerminalWindow = ({
       </div>
 
       {/* Terminal Display Area */}
+      {showMatrix ? (
+        <div className="relative flex-grow overflow-hidden bg-black">
+          <MatrixRain onExit={() => setShowMatrix(false)} />
+        </div>
+      ) : (
       <div 
         className={`${theme.bg} ${theme.text} font-mono flex-grow overflow-y-auto p-4 md:p-6 cursor-text border-[4px] border-transparent`}
         onClick={handleTerminalClick}
@@ -175,6 +183,7 @@ const TerminalWindow = ({
         {/* Invisible div to anchor the auto-scroll */}
         <div ref={bottomRef} className="pb-4" />
       </div>
+      )}
     </div>
   );
 };

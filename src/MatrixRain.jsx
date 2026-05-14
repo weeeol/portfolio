@@ -7,20 +7,23 @@ const MatrixRain = ({ onExit }) => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
 
-    // Make canvas full screen
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Use the parent element's dimensions to fit the container
+    const resizeCanvas = () => {
+      if (canvasRef.current && canvasRef.current.parentElement) {
+        canvas.width = canvasRef.current.parentElement.clientWidth;
+        canvas.height = canvasRef.current.parentElement.clientHeight;
+      }
+    };
+    
+    resizeCanvas();
 
     // The characters to use in the rain
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%""\'#&_(),.;:?!\\|{}<>[]^~'.split('');
     const fontSize = 16;
-    const columns = canvas.width / fontSize;
     
     // Array to track the Y coordinate of each column
-    const drops = [];
-    for (let x = 0; x < columns; x++) {
-      drops[x] = 1;
-    }
+    let columns = canvas.width / fontSize;
+    let drops = Array(Math.floor(columns)).fill(1);
 
     const draw = () => {
       // Draw a translucent black rectangle to create the fade effect
@@ -49,10 +52,10 @@ const MatrixRain = ({ onExit }) => {
     // Run the animation loop every 33 milliseconds
     const interval = setInterval(draw, 33);
 
-    // Handle resizing the window
     const handleResize = () => {
-       canvas.width = window.innerWidth;
-       canvas.height = window.innerHeight;
+       resizeCanvas();
+       columns = canvas.width / fontSize;
+       drops = Array(Math.floor(columns)).fill(1);
     }
     window.addEventListener('resize', handleResize);
 
@@ -64,11 +67,11 @@ const MatrixRain = ({ onExit }) => {
   }, []);
 
   return (
-    // This wrapper div covers the whole screen and listens for clicks to exit
-    <div className="fixed inset-0 z-50 bg-black cursor-pointer" onClick={onExit} role="button" aria-label="Exit Matrix mode">
+    // This wrapper div covers the container and listens for clicks to exit
+    <div className="absolute inset-0 z-50 bg-black cursor-pointer" onClick={onExit} role="button" aria-label="Exit Matrix mode">
       <canvas ref={canvasRef} className="block w-full h-full" aria-label="Matrix rain animation" />
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 text-green-500 font-mono bg-black/80 px-4 py-2 rounded" aria-hidden="true">
-        Click anywhere to exit Matrix mode
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-green-500 font-mono bg-black/80 px-2 py-1 rounded text-xs" aria-hidden="true">
+        Click to exit Matrix mode
       </div>
     </div>
   );

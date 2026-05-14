@@ -105,10 +105,6 @@ const App = () => {
     return <StartupIntro onComplete={() => setShowIntro(false)} />;
   }
 
-  if (showMatrix) {
-    return <MatrixRain onExit={() => setShowMatrix(false)} />;
-  }
-
   return (
     <>
       <PortfolioGUI 
@@ -126,6 +122,8 @@ const App = () => {
           bottomRef={bottomRef}
           theme={theme}
           onClose={() => setIsTerminalOpen(false)}
+          showMatrix={showMatrix}
+          setShowMatrix={setShowMatrix}
         />
       )}
     </>
