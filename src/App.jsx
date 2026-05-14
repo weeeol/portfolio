@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import PortfolioGUI from './PortfolioGUI';
 import TerminalWindow from './TerminalWindow';
 import MatrixRain from './MatrixRain';
@@ -126,6 +127,7 @@ const App = () => {
           setShowMatrix={setShowMatrix}
         />
       )}
+      <Analytics />
     </>
   );
 };
