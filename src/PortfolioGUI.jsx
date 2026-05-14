@@ -107,6 +107,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
   // Scroll Navigation State
   const [activeSection, setActiveSection] = useState('hero');
   const [showSideNav, setShowSideNav] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // Mail copied state
   const [showCopied, setShowCopied] = useState(false);
@@ -222,6 +223,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
     const el = document.getElementById(sectionId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
+      setShowMobileMenu(false);
     }
   };
 
@@ -430,42 +432,83 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
       </footer>
       
       {/* 8-bit Top Taskbar */}
-      <div className="fixed top-0 left-0 right-0 h-12 md:h-14 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] z-50 flex items-center justify-between px-2 md:px-4">
-        {/* Start Button / Terminal Access */}
-        <button 
-          onClick={onToggleTerminal}
-          className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
-        >
-          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">
-            <polyline points="4 17 10 11 4 5"></polyline>
-            <line x1="12" y1="19" x2="20" y2="19"></line>
-          </svg>
-          <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1 hidden sm:block">Terminal</span>
-        </button>
+      <div className="fixed top-0 left-0 right-0 bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] z-50 flex flex-col">
+        {/* Main Taskbar */}
+        <div className="h-12 md:h-14 flex items-center justify-between px-2 md:px-4 gap-2">
+          {/* Start Button / Terminal Access */}
+          <button 
+            onClick={onToggleTerminal}
+            className="h-8 md:h-10 px-3 md:px-4 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 md:border-4 border-b-4 md:border-b-[6px] border-r-4 md:border-r-[6px] border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex items-center gap-2"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="square" strokeLinejoin="miter">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span className="text-[10px] md:text-xs tracking-widest uppercase mt-1 hidden sm:block">Terminal</span>
+          </button>
 
-        {/* Section Navigation Links */}
-        <nav className="flex items-center gap-2 md:gap-4 lg:gap-6">
-          {['hero', 'about', 'skills', 'projects'].map((section) => (
-            <button
-              key={section}
-              onClick={() => scrollToSection(section)}
-              className={`text-[10px] md:text-[12px] tracking-widest uppercase px-3 py-1.5 md:px-4 md:py-2 transition-all duration-200 border-2 md:border-[3px] ${
-                activeSection === section 
-                  ? 'bg-[#8b5a2b] text-[#e6c17a] border-[#4a2e1b] shadow-inner font-bold' 
-                  : 'bg-transparent text-[#4a2e1b] border-transparent hover:bg-[#dfbb85] hover:border-[#8b5a2b]'
-              }`}
-            >
-              {section}
-            </button>
-          ))}
-        </nav>
+          {/* Mobile Name Display - Shows when scrolled down */}
+          {showSideNav && (
+            <div className="md:hidden text-[10px] tracking-widest uppercase text-[#4a2e1b] font-bold whitespace-nowrap">
+              Veol Steve Jose
+            </div>
+          )}
 
-        {/* System Tray (Clock) */}
-        <div className="h-8 md:h-10 px-3 bg-[#cf9e5c] border-2 md:border-4 border-t-4 md:border-t-[6px] border-l-4 md:border-l-[6px] border-[#8b5a2b] shadow-inner flex items-center justify-center text-[#4a2e1b] hidden sm:flex">
-          <span className="text-[10px] md:text-xs tracking-widest drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)] mt-1">
-            {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
-          </span>
+          {/* Section Navigation Links - Hidden on Mobile */}
+          <nav className="hidden md:flex items-center gap-2 md:gap-4 lg:gap-6">
+            {['hero', 'about', 'skills', 'projects'].map((section) => (
+              <button
+                key={section}
+                onClick={() => scrollToSection(section)}
+                className={`text-[10px] md:text-[12px] tracking-widest uppercase px-3 py-1.5 md:px-4 md:py-2 transition-all duration-200 border-2 md:border-[3px] ${
+                  activeSection === section 
+                    ? 'bg-[#8b5a2b] text-[#e6c17a] border-[#4a2e1b] shadow-inner font-bold' 
+                    : 'bg-transparent text-[#4a2e1b] border-transparent hover:bg-[#dfbb85] hover:border-[#8b5a2b]'
+                }`}
+              >
+                {section}
+              </button>
+            ))}
+          </nav>
+
+          {/* Hamburger Menu Button - Visible only on Mobile */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="md:hidden h-8 px-2 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 border-b-4 border-r-4 border-[#8b5a2b] active:border-b-2 active:border-r-2 active:translate-y-[2px] transition-all flex flex-col items-center justify-center gap-1"
+          >
+            <div className="w-5 h-0.5 bg-[#e6c17a]"></div>
+            <div className="w-5 h-0.5 bg-[#e6c17a]"></div>
+            <div className="w-5 h-0.5 bg-[#e6c17a]"></div>
+          </button>
+
+          {/* System Tray (Clock) */}
+          <div className="h-8 md:h-10 px-3 bg-[#cf9e5c] border-2 md:border-4 border-t-4 md:border-t-[6px] border-l-4 md:border-l-[6px] border-[#8b5a2b] shadow-inner flex items-center justify-center text-[#4a2e1b] hidden sm:flex">
+            <span className="text-[10px] md:text-xs tracking-widest drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)] mt-1">
+              {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit'})}
+            </span>
+          </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="md:hidden bg-[#dfbb85] border-t-2 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)]">
+            <nav className="flex flex-col">
+              {['hero', 'about', 'skills', 'projects'].map((section) => (
+                <button
+                  key={section}
+                  onClick={() => scrollToSection(section)}
+                  className={`text-[12px] tracking-widest uppercase px-4 py-3 transition-all duration-200 border-b border-[#8b5a2b] ${
+                    activeSection === section 
+                      ? 'bg-[#8b5a2b] text-[#e6c17a] font-bold' 
+                      : 'bg-[#dfbb85] text-[#4a2e1b] hover:bg-[#e6c17a]'
+                  }`}
+                >
+                  {section}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
       </div>
     </div>
