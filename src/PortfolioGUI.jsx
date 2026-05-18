@@ -94,10 +94,47 @@ const DraggableNote = ({ title, content, initialRotation }) => {
   );
 };
 
+const projectsData = [
+  {
+    title: "Flowmake",
+    link: "https://github.com/weeeol/Flowmake",
+    desc: "Full-stack application that automatically converts Python source code into modern, professional flowcharts by parsing the Abstract Syntax Tree (AST)."
+  },
+  {
+    title: "ExplainIt",
+    link: "https://github.com/vinish-dev/WinterHackathon-NoLatency",
+    desc: "Static analysis and AI tool that explains code functionality and breaking points without ever modifying or uploading the source code."
+  },
+  {
+    title: "Activity App",
+    link: "https://github.com/weeeol/ActivityApp",
+    desc: "Developed in Kotlin for Android, this app helps users track and manage their daily activities with a clean interface and efficient performance."
+  },
+  {
+    title: "ProtoPlay",
+    link: "https://github.com/weeeol/ProtoPlay",
+    desc: "An experimental game project built with Pygame, serving as a foundation for testing mechanics, sprite movement, and input handling."
+  },
+  {
+    title: "Text Editor",
+    link: "https://github.com/weeeol/Text_Editor",
+    desc: "A lightweight desktop text editor engineered with Python and Tkinter, supporting rapid file operations and editing."
+  }
+];
+
 const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("Loading");
   const [subText, setSubText] = useState("Generating world...");
+  
+  // Project pagination state
+  const [projectPage, setProjectPage] = useState(0);
+  const PROJECTS_PER_PAGE = 3;
+  const totalPages = Math.ceil(projectsData.length / PROJECTS_PER_PAGE);
+
+  const handleNextProjects = () => setProjectPage(p => (p + 1) % totalPages);
+  const handlePrevProjects = () => setProjectPage(p => (p - 1 + totalPages) % totalPages);
+
   
   // Animation states
   const [showName, setShowName] = useState(false);
@@ -362,7 +399,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
             <DraggableNote 
                title="Languages" 
                initialRotation={-2}
-               content="C, C++, C#, Java, Python <br/>JavaScript, React, Kotlin, Lua <br/>HTML, CSS, Bash Script" 
+               content="C, C++, C#, Java, Python<br/>JavaScript, React, Kotlin, LaTeX <br/>HTML, CSS, Bash Script" 
             />
             <DraggableNote 
                title="Game Dev & Design" 
@@ -372,7 +409,7 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
             <DraggableNote 
                title="Tools & Frameworks" 
                initialRotation={-1}
-               content="Node.js, Next.js, FastAPI, Qt <br/>SQLite, MySQL, CMake, NPM <br/>Vercel, Render, Raspberry Pi, LaTeX, Git, Linux" 
+               content="Node.js, Next.js, FastAPI, Vite <br/>SQLite, MySQL, <br/>Vercel, Render, Raspberry Pi, Git, Linux" 
             />
           </div>
         </div>
@@ -380,47 +417,44 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
 
       {/* Section 3: Town Ledger */}
       <section id="projects" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
-         <div className="max-w-5xl w-full space-y-12 bg-[#fff9e6]/95 border-x-[12px] border-[#8b5a2b] p-8 pb-12 shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative">
+         <div 
+           className="max-w-5xl w-full space-y-12 bg-[#fff9e6]/95 border-x-[12px] border-[#8b5a2b] p-8 pb-12 shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative"
+           style={{ backgroundImage: `url(${paperTexture})`, backgroundSize: 'cover', backgroundBlendMode: 'multiply' }}
+         >
           <h2 className="text-xl md:text-3xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-6 border-dashed border-[#8b5a2b] pb-4">Town Ledger: Projects</h2>
 
-          <div className="flex flex-col gap-y-12">
-            
-            <a href="https://github.com/weeeol/Flowmake" target="_blank" rel="noreferrer" className="block space-y-4 group cursor-pointer text-center bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-              <h3 className="text-xl md:text-2xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Flowmake</h3>
-              <p className="text-xs md:text-sm lg:text-base text-[#4a2e1b] max-w-2xl mx-auto leading-relaxed md:leading-loose">
-                Full-stack application that automatically converts Python source code into modern, professional flowcharts by parsing the Abstract Syntax Tree (AST).
-              </p>
-            </a>
-
-            <a href="https://github.com/vinish-dev/WinterHackathon-NoLatency" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-              <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">ExplainIt</h3>
-              <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
-                Static analysis and AI tool that explains code functionality and breaking points without ever modifying or uploading the source code.
-              </p>
-            </a>
-
-            <a href="https://github.com/weeeol/ActivityApp" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-              <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Activity App</h3>
-              <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
-                Developed in Kotlin for Android, this app helps users track and manage their daily activities with a clean interface and efficient performance.
-              </p>
-            </a>
-
-            <a href="https://github.com/weeeol/ProtoPlay" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-              <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">ProtoPlay</h3>
-              <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
-                An experimental game project built with Pygame, serving as a foundation for testing mechanics, sprite movement, and input handling.
-              </p>
-            </a>
-
-            <a href="https://github.com/weeeol/Text_Editor" target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-              <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">Text Editor</h3>
-              <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
-                A lightweight desktop text editor engineered with Python and Tkinter, supporting rapid file operations and editing.
-              </p>
-            </a>
-
+          <div className="flex flex-col gap-y-12 min-h-[500px]">
+            {projectsData
+              .slice(projectPage * PROJECTS_PER_PAGE, (projectPage + 1) * PROJECTS_PER_PAGE)
+              .map((proj, idx) => (
+                <a key={idx} href={proj.link} target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+                  <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">{proj.title}</h3>
+                  <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
+                    {proj.desc}
+                  </p>
+                </a>
+              ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-8 px-4">
+              <button 
+                onClick={handlePrevProjects}
+                className="px-6 py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-xs md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
+              >
+                Prev
+              </button>
+              <div className="text-[#8b5a2b] font-bold text-xs md:text-sm tracking-widest">
+                Page {projectPage + 1} / {totalPages}
+              </div>
+              <button 
+                onClick={handleNextProjects}
+                className="px-6 py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-xs md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </section>
       

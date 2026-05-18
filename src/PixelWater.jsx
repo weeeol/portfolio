@@ -494,10 +494,38 @@ const PixelWater = ({ isPaused = false }) => {
 
     animationFrame = requestAnimationFrame(draw);
 
+    let lastPointer = null;
+
     // --- Interactive Listeners ---
     const handlePointerMove = (e) => {
       if (isPausedRef.current) return;
-      applyRipple(e.clientX, e.clientY, 150, 0); 
+      
+      const x = e.clientX;
+      const y = e.clientY;
+      
+      if (lastPointer) {
+        const dx = x - lastPointer.x;
+        const dy = y - lastPointer.y;
+        const dist = Math.hypot(dx, dy);
+        
+        // Prevent huge lines if mouse leaves and re-enters window far away
+        if (dist < 300) {
+          const steps = Math.max(1, Math.floor(dist / 5));
+          for (let i = 1; i <= steps; i++) {
+            applyRipple(lastPointer.x + dx * (i / steps), lastPointer.y + dy * (i / steps), 150, 0);
+          }
+        } else {
+          applyRipple(x, y, 150, 0);
+        }
+      } else {
+        applyRipple(x, y, 150, 0); 
+      }
+      
+      lastPointer = { x, y };
+    };
+
+    const handlePointerLeave = () => {
+      lastPointer = null;
     };
 
     const handlePointerDown = (e) => {
@@ -552,12 +580,14 @@ const PixelWater = ({ isPaused = false }) => {
     };
 
     window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerleave', handlePointerLeave);
     window.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('trigger-splash', handleCustomSplash);
 
     return () => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerleave', handlePointerLeave);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('trigger-splash', handleCustomSplash);
       cancelAnimationFrame(animationFrame);
