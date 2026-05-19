@@ -341,43 +341,43 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
         <div className="max-w-5xl w-full bg-[#f4e2b0] border-[#8b5a2b] border-[12px] p-6 md:p-10 shadow-[10px_10px_0_rgba(0,0,0,0.5)] flex flex-col md:flex-row gap-8 relative">
           <div className="absolute inset-0 border-[4px] border-[#cf9e5c] pointer-events-none"></div>
 
-          <div className="w-full md:w-2/5 flex flex-col items-center justify-center gap-6 z-10 mt-4 md:mt-0">
-            <div className="w-64 h-80 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="w-full md:w-2/5 flex flex-col items-center justify-center gap-4 md:gap-6 z-10 mt-4 md:mt-0">
+            <div className="w-52 h-64 md:w-64 md:h-80 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden flex-shrink-0">
               <img src={profileImage} alt="Profile" className="w-full h-full object-cover object-top scale-[1.15]" />
             </div>
-            <h2 className="text-xs md:text-sm text-[#4a2e1b] bg-[#dfbb85] border-[6px] border-[#8b5a2b] px-6 py-4 w-full max-w-[250px] text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">CS ENGINEER</h2>
+            <h2 className="text-[10px] md:text-sm text-[#4a2e1b] bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] px-4 py-3 md:px-6 md:py-4 w-full max-w-[200px] md:max-w-[250px] text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">CS ENGINEER</h2>
           </div>
           
-          <div className="w-full md:w-3/5 flex flex-col justify-center gap-10 z-10 pt-2">
-            <div className="bg-[#dfbb85] border-[6px] border-[#8b5a2b] p-8 shadow-[inset_6px_6px_0_rgba(0,0,0,0.1)]">
-              <h2 className="text-base md:text-xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-3 mb-6 inline-block">Profile Stats</h2>
-              <p className="text-xs md:text-sm text-[#4a2e1b] leading-[2.5]">
+          <div className="w-full md:w-3/5 flex flex-col justify-center gap-6 md:gap-10 z-10 pt-2">
+            <div className="bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] p-5 md:p-8 shadow-[inset_4px_4px_0_rgba(0,0,0,0.1)] md:shadow-[inset_6px_6px_0_rgba(0,0,0,0.1)]">
+              <h2 className="text-sm md:text-xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-2 md:pb-3 mb-4 md:mb-6 inline-block">Profile Stats</h2>
+              <p className="text-[10px] md:text-sm text-[#4a2e1b] leading-loose md:leading-[2.5]">
                 CS Engineer & Aspiring Game Developer.
                 <br/><br/>
                 "I am confident in my abilities as a CS Engineer. I welcome any questions and am committed to answering them with complete honesty."
               </p>
             </div>
 
-            <div className="grid grid-cols-4 gap-6">
-              <a href="https://github.com/weeeol" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
-                 <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            <div className="grid grid-cols-4 gap-4 md:gap-6">
+              <a href="https://github.com/weeeol" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[4px_4px_0_rgba(0,0,0,0.2)] md:shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
+                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="md:w-8 md:h-8 group-hover:scale-110 transition-transform"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
               </a>
               
               <div className="relative aspect-square">
-                <button onClick={handleCopyEmail} className="w-full h-full bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none cursor-pointer">
-                  <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <button onClick={handleCopyEmail} className="w-full h-full bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[4px_4px_0_rgba(0,0,0,0.2)] md:shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none cursor-pointer">
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="md:w-8 md:h-8 group-hover:scale-110 transition-transform"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 </button>
                 {showCopied && (
-                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#4a2e1b] text-[#e6c17a] text-xs px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none animate-fade-in-up">
+                  <div className="absolute -top-8 md:-top-10 left-1/2 -translate-x-1/2 bg-[#4a2e1b] text-[#e6c17a] text-[10px] md:text-xs px-2 py-1 rounded whitespace-nowrap z-10 pointer-events-none animate-fade-in-up">
                     Copied!
                   </div>
                 )}
               </div>
 
-              <a href="https://www.linkedin.com/in/veolstevejose" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
-                 <svg viewBox="0 0 24 24" width="32" height="32" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              <a href="https://www.linkedin.com/in/veolstevejose" target="_blank" rel="noreferrer" className="aspect-square bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] flex items-center justify-center hover:bg-[#e6c17a] transition-colors group shadow-[4px_4px_0_rgba(0,0,0,0.2)] md:shadow-[6px_6px_0_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none">
+                 <svg viewBox="0 0 24 24" width="24" height="24" stroke="#4a2e1b" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="md:w-8 md:h-8 group-hover:scale-110 transition-transform"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
               </a>
-              <div className="aspect-square bg-[#dfbb85] border-[6px] border-[#8b5a2b] opacity-40 shadow-inner"></div>
+              <div className="aspect-square bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] opacity-40 shadow-inner"></div>
             </div>
           </div>
         </div>
@@ -386,16 +386,17 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
       {/* Section 2: Tech Arsenal */}
      <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
         <div 
-          className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[12px] border-[#8b5a2b] p-6 md:p-15 shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center"
+          className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[8px] md:border-[12px] border-[#8b5a2b] p-4 md:p-15 shadow-[6px_6px_0_rgba(0,0,0,0.5)] md:shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center h-auto min-h-[600px] md:min-h-0"
           style={{ backgroundImage: `url(${woodTexture})`, backgroundSize: 'cover', backgroundBlendMode: 'multiply' }}
         >
           
-          <div className="absolute top-4 left-4 w-6 h-6 bg-red-600 rounded-full shadow-md border-b-4 border-red-800"></div>
-          <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full shadow-md border-b-4 border-blue-800"></div>
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 w-4 h-4 md:w-6 md:h-6 bg-red-600 rounded-full shadow-md border-b-2 md:border-b-4 border-red-800"></div>
+          <div className="absolute top-2 right-2 md:top-4 md:right-4 w-4 h-4 md:w-6 md:h-6 bg-blue-600 rounded-full shadow-md border-b-2 md:border-b-4 border-blue-800"></div>
           
-          <h2 className="text-xl md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-3 inline-block mt-4">Bulletin Board: Skills</h2>
+          <h2 className="text-[12px] md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-2 md:border-b-4 border-[#8b5a2b] pb-2 md:pb-3 inline-block mt-4 md:mt-4">Bulletin Board: Skills</h2>
           
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-8 text-xs lg:text-sm pt-8 pb-4 h-auto lg:h-[350px] w-full">
+          {/* Notes display horizontally on desktop and drop into a nice readable format or stack on mobile */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] md:text-sm lg:text-sm pt-8 pb-4 h-auto lg:h-[350px] w-full mt-4 md:mt-0">
             <DraggableNote 
                title="Languages" 
                initialRotation={-2}
@@ -416,20 +417,17 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
       </section>
 
       {/* Section 3: Town Ledger */}
-      <section id="projects" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
-         <div 
-           className="max-w-5xl w-full space-y-12 bg-[#fff9e6]/95 border-x-[12px] border-[#8b5a2b] p-8 pb-12 shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative"
-           style={{ backgroundImage: `url(${paperTexture})`, backgroundSize: 'cover', backgroundBlendMode: 'multiply' }}
-         >
-          <h2 className="text-xl md:text-3xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-6 border-dashed border-[#8b5a2b] pb-4">Town Ledger: Projects</h2>
+      <section id="projects" className="w-full flex flex-col items-center justify-center p-2 md:p-4 bg-transparent min-h-screen snap-start">
+         <div className="max-w-5xl w-full flex flex-col bg-[#fff9e6]/95 border-x-[8px] md:border-x-[12px] border-[#8b5a2b] p-4 md:p-8 pb-8 md:pb-12 shadow-[6px_6px_0_rgba(0,0,0,0.4)] md:shadow-[8px_8px_0_rgba(0,0,0,0.4)] relative min-h-[80vh]">
+          <h2 className="text-sm md:text-3xl uppercase tracking-widest text-[#8b5a2b] text-center border-b-[4px] md:border-b-6 border-dashed border-[#8b5a2b] pb-2 md:pb-4 mb-6 md:mb-12">Town Ledger: Projects</h2>
 
-          <div className="flex flex-col gap-y-12 min-h-[500px]">
+          <div className="flex flex-col gap-y-6 md:gap-y-12 flex-1">
             {projectsData
               .slice(projectPage * PROJECTS_PER_PAGE, (projectPage + 1) * PROJECTS_PER_PAGE)
               .map((proj, idx) => (
-                <a key={idx} href={proj.link} target="_blank" rel="noreferrer" className="block space-y-3 group cursor-pointer bg-[#e6c17a] p-8 border-4 border-[#8b5a2b] shadow-md transform hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
-                  <h3 className="text-lg md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">{proj.title}</h3>
-                  <p className="text-xs md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
+                <a key={idx} href={proj.link} target="_blank" rel="noreferrer" className="block space-y-2 md:space-y-3 group cursor-pointer bg-[#e6c17a] p-4 md:p-8 border-[3px] md:border-4 border-[#8b5a2b] shadow-md transform hover:scale-[1.02] md:hover:scale-105 hover:bg-[#ebd290] transition-all duration-200">
+                  <h3 className="text-sm md:text-xl font-bold text-[#8b5a2b] tracking-wider drop-shadow-sm group-hover:text-[#4a2e1b] transition-colors">{proj.title}</h3>
+                  <p className="text-[10px] md:text-sm text-[#4a2e1b] leading-relaxed md:leading-loose">
                     {proj.desc}
                   </p>
                 </a>
@@ -437,19 +435,19 @@ const PortfolioGUI = ({ onToggleTerminal, isTerminalOpen }) => {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-8 px-4">
+            <div className="flex justify-between items-center mt-12 px-2 md:px-4">
               <button 
                 onClick={handlePrevProjects}
-                className="px-6 py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-xs md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
+                className="px-4 py-2 md:px-6 md:py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-[10px] md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
               >
                 Prev
               </button>
-              <div className="text-[#8b5a2b] font-bold text-xs md:text-sm tracking-widest">
+              <div className="text-[#8b5a2b] font-bold text-[10px] md:text-sm tracking-widest text-center mx-2">
                 Page {projectPage + 1} / {totalPages}
               </div>
               <button 
                 onClick={handleNextProjects}
-                className="px-6 py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-xs md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
+                className="px-4 py-2 md:px-6 md:py-2 bg-[#8b5a2b] text-[#fff9e6] uppercase tracking-widest text-[10px] md:text-sm font-bold border-b-4 border-r-4 border-[#4a2e1b] active:border-b-0 active:border-r-0 active:translate-y-1 active:translate-x-1 hover:bg-[#a66d35] transition-all"
               >
                 Next
               </button>

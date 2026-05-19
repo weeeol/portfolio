@@ -85,9 +85,12 @@ const PixelWater = ({ isPaused = false }) => {
       return shader;
     };
 
+    const vs = compileShader(gl.VERTEX_SHADER, vertexShaderSource);
+    const fs = compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource);
+
     const program = gl.createProgram();
-    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderSource));
-    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource));
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
     gl.linkProgram(program);
     gl.useProgram(program);
 
@@ -581,6 +584,8 @@ const PixelWater = ({ isPaused = false }) => {
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerleave', handlePointerLeave);
+    window.addEventListener('pointerup', handlePointerLeave);
+    window.addEventListener('pointercancel', handlePointerLeave);
     window.addEventListener('pointerdown', handlePointerDown);
     window.addEventListener('trigger-splash', handleCustomSplash);
 
@@ -588,6 +593,8 @@ const PixelWater = ({ isPaused = false }) => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerleave', handlePointerLeave);
+      window.removeEventListener('pointerup', handlePointerLeave);
+      window.removeEventListener('pointercancel', handlePointerLeave);
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('trigger-splash', handleCustomSplash);
       cancelAnimationFrame(animationFrame);
@@ -600,6 +607,8 @@ const PixelWater = ({ isPaused = false }) => {
       gl.deleteTexture(boatTexture);
       gl.deleteBuffer(positionBuffer);
       gl.deleteBuffer(texCoordBuffer);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
       gl.deleteProgram(program);
     };
   }, []);
