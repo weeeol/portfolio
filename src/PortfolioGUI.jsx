@@ -7,11 +7,14 @@ import SkillsBoard from './components/SkillsBoard';
 import ProjectLedger from './components/ProjectLedger';
 import Taskbar from './components/Taskbar';
 import BG2 from './assets/BG2.png';
+import { useVeolCode } from './hooks/useVeolCode';
+import MiniGame from './components/MiniGame';
 
 const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("Loading");
   const [subText, setSubText] = useState("Generating world...");
+  const { success: showMiniGame, setSuccess: setShowMiniGame } = useVeolCode();
 
   // Animation states
   const [showName, setShowName] = useState(false);
@@ -129,6 +132,8 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
       onScroll={handleScroll}
       style={{ fontFamily: '"Press Start 2P", system-ui' }}>
 
+      {showMiniGame && <MiniGame onClose={() => setShowMiniGame(false)} />}
+
       {waterEnabled ? (
         <PixelWater isPaused={false} />
       ) : (
@@ -168,6 +173,7 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
           activeSection={activeSection}
           scrollToSection={scrollToSection}
           showSideNav={showSideNav}
+          showName={showName}
         />
       </div>
     </div>

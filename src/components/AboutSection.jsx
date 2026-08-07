@@ -20,17 +20,26 @@ const AboutSection = () => {
           <div className="w-52 h-64 md:w-64 md:h-80 bg-[#dfbb85] border-8 border-[#8b5a2b] shadow-[inset_6px_6px_0_rgba(0,0,0,0.15)] flex flex-col items-center justify-center relative overflow-hidden flex-shrink-0">
             <img src={profileImage} alt="Profile" className="w-full h-full object-cover object-top scale-[1.15]" />
           </div>
-          <h2 className="text-[10px] md:text-sm text-[#4a2e1b] bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] px-4 py-3 md:px-6 md:py-4 w-full max-w-[200px] md:max-w-[250px] text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">CS ENGINEER</h2>
+          <div className="flex flex-col gap-2 w-full max-w-[200px] md:max-w-[250px]">
+            <h1 className="text-[12px] md:text-sm text-[#e6c17a] bg-[#4a2e1b] border-[4px] md:border-[6px] border-[#8b5a2b] px-4 py-3 md:px-4 md:py-3 text-center tracking-widest font-bold shadow-[6px_6px_0_rgba(0,0,0,0.2)]">
+              VEOL STEVE
+            </h1>
+            <h2 className="text-[10px] md:text-xs text-[#4a2e1b] bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] px-4 py-2 md:px-4 md:py-2 text-center tracking-widest shadow-[6px_6px_0_rgba(0,0,0,0.2)]">
+              CS ENGINEER
+            </h2>
+          </div>
         </div>
 
         <div className="w-full md:w-3/5 flex flex-col justify-center gap-6 md:gap-10 z-10 pt-2">
           <div className="bg-[#dfbb85] border-[4px] md:border-[6px] border-[#8b5a2b] p-5 md:p-8 shadow-[inset_4px_4px_0_rgba(0,0,0,0.1)] md:shadow-[inset_6px_6px_0_rgba(0,0,0,0.1)]">
             <h2 className="text-sm md:text-xl uppercase tracking-widest text-[#4a2e1b] border-b-4 border-[#8b5a2b] pb-2 md:pb-3 mb-4 md:mb-6 inline-block">Profile Stats</h2>
-            <p className="text-[10px] md:text-sm text-[#4a2e1b] leading-loose md:leading-[2.5]">
-              CS Engineer & Aspiring Game Developer.
-              <br /><br />
-              "I am confident in my abilities as a CS Engineer. I welcome any questions and am committed to answering them with complete honesty."
-            </p>
+            <div className="text-[10px] md:text-sm text-[#4a2e1b] leading-loose md:leading-[2.5] flex flex-col gap-2 md:gap-4">
+              <p>CS Engineer & Aspiring Game Developer.</p>
+
+              <p className="mt-2 md:mt-4 italic border-l-4 border-[#8b5a2b] pl-3 md:pl-4 bg-[#cf9e5c]/20 py-2 md:py-3 pr-2">
+                "I am confident in my abilities as a CS Engineer. I welcome any questions and am committed to answering them with complete honesty."
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-4 gap-4 md:gap-6">
