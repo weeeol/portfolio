@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const Taskbar = ({ waterEnabled, setWaterEnabled, activeSection, scrollToSection, showSideNav, showName }) => {
+const Taskbar = ({ waterEnabled, setWaterEnabled, activeSection, scrollToSection, showSideNav, showName, onReplayBootIntro }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [time, setTime] = useState(new Date());
@@ -57,6 +57,19 @@ const Taskbar = ({ waterEnabled, setWaterEnabled, activeSection, scrollToSection
                   </div>
                 </div>
               </label>
+
+              {onReplayBootIntro && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSettings(false);
+                    onReplayBootIntro();
+                  }}
+                  className="w-full text-center px-2 py-1.5 bg-[#4a2e1b] hover:bg-[#5c4033] text-[#e6c17a] border-2 border-[#8b5a2b] text-[8px] md:text-[10px] tracking-widest uppercase font-bold transition-all active:translate-y-[1px]"
+                >
+                  Replay Boot
+                </button>
+              )}
             </div>
           )}
         </div>

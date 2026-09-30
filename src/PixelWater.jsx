@@ -616,6 +616,8 @@ const PixelWater = ({ isPaused = false }) => {
   return (
     <canvas
       ref={canvasRef}
+      role="img"
+      aria-label="Interactive WebGL pixel water background simulation"
       className="fixed inset-0 z-0 pointer-events-none w-full h-full bg-[#0e74af]"
     />
   );

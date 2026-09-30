@@ -10,7 +10,7 @@ import BG2 from './assets/BG2.png';
 import { useVeolCode } from './hooks/useVeolCode';
 import MiniGame from './components/MiniGame';
 
-const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
+const PortfolioGUI = ({ waterEnabled, setWaterEnabled, onReplayBootIntro }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadingText, setLoadingText] = useState("Loading");
   const [subText, setSubText] = useState("Generating world...");
@@ -172,6 +172,7 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
           scrollToSection={scrollToSection}
           showSideNav={showSideNav}
           showName={showName}
+          onReplayBootIntro={onReplayBootIntro}
         />
       </div>
     </div>

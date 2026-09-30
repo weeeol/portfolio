@@ -214,7 +214,12 @@ const MiniGame = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-[200] font-mono" style={{ fontFamily: '"Press Start 2P", system-ui' }}>
       <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');` }} />
-      <canvas ref={canvasRef} className="block" />
+      <canvas 
+        ref={canvasRef} 
+        role="region"
+        aria-label="Retro bug shooting mini-game canvas"
+        className="block" 
+      />
       
       <div className="absolute top-4 left-4 text-[#4ade80] text-xl drop-shadow-[2px_2px_0_#000]">
         SCORE: {score}

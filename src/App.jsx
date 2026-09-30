@@ -16,6 +16,7 @@ const App = () => {
       <PortfolioGUI 
         waterEnabled={waterEnabled}
         setWaterEnabled={setWaterEnabled}
+        onReplayBootIntro={() => setShowIntro(true)}
       />
       <Analytics />
     </>
