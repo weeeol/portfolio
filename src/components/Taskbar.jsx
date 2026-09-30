@@ -19,7 +19,7 @@ const Taskbar = ({ waterEnabled, setWaterEnabled, activeSection, scrollToSection
   };
 
   return (
-    <div className={`fixed top-0 left-0 right-0 z-50 flex flex-col transition-transform duration-1000 delay-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${showName ? 'translate-y-0' : '-translate-y-full'}`}>
+    <div data-water-ignore="true" className={`fixed top-0 left-0 right-0 z-50 flex flex-col transition-transform duration-1000 delay-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] ${showName ? 'translate-y-0' : '-translate-y-full'}`}>
       {/* Main Taskbar */}
       <div className="bg-[#e6c17a] border-b-4 border-[#8b5a2b] shadow-[0_4px_0_rgba(0,0,0,0.3)] h-12 md:h-14 flex items-center justify-between px-2 md:px-4 gap-2 relative z-50">
         
