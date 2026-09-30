@@ -293,6 +293,8 @@ const PixelWater = ({ isPaused = false }) => {
              let nearbyX = 0;
              let nearbyY = 0;
              let nearbyCount = 0;
+             let separationX = 0;
+             let separationY = 0;
              fishes.forEach(other => {
                if (other === fish) return;
                const distance = Math.hypot(other.x - fish.x, other.y - fish.y);
@@ -301,11 +303,18 @@ const PixelWater = ({ isPaused = false }) => {
                  nearbyY += other.y;
                  nearbyCount++;
                }
+               if (distance > 0 && distance < 70) {
+                 const separation = (70 - distance) / 70;
+                 separationX -= ((other.x - fish.x) / distance) * separation;
+                 separationY -= ((other.y - fish.y) / distance) * separation;
+               }
              });
              if (nearbyCount) {
-               fish.vx += ((nearbyX / nearbyCount - fish.x) * 0.0003);
-               fish.vy += ((nearbyY / nearbyCount - fish.y) * 0.0003);
+               fish.vx += ((nearbyX / nearbyCount - fish.x) * 0.00015);
+               fish.vy += ((nearbyY / nearbyCount - fish.y) * 0.00015);
              }
+             fish.vx += separationX * 0.018;
+             fish.vy += separationY * 0.018;
              fish.phase += 0.06;
              fish.vy += Math.sin(fish.phase) * 0.006;
              fish.vx = Math.max(-0.7, Math.min(0.7, fish.vx));
