@@ -524,7 +524,7 @@ const PixelWater = ({ isPaused = false }) => {
       const x = e.clientX;
       const y = e.clientY;
       const isTouch = e.pointerType === 'touch';
-      const rippleStrength = isTouch ? 90 : 150;
+      const rippleStrength = isTouch ? 20 : 150;
       
       if (lastPointer) {
         const dx = x - lastPointer.x;
@@ -571,6 +571,8 @@ const PixelWater = ({ isPaused = false }) => {
       if (e.target instanceof Element && e.target.closest('[data-water-ignore]')) return;
       const cx = e.clientX;
       const cy = e.clientY;
+      const isTouch = e.pointerType === 'touch';
+      const rippleSize = isTouch ? 0 : 1;
       
       let hitSomething = false;
 
@@ -581,7 +583,7 @@ const PixelWater = ({ isPaused = false }) => {
           hitSomething = true;
           // Boat goes into overdrive and creates a massive splash
           boatInfo.vx *= 2.5;
-          applyRipple(boatInfo.x, boatInfo.y, 5000, 2);
+          applyRipple(boatInfo.x, boatInfo.y, isTouch ? 1200 : 5000, isTouch ? 1 : 2);
         }
       }
 
@@ -599,8 +601,8 @@ const PixelWater = ({ isPaused = false }) => {
             fish.vx = (fish.x - cx) * 0.2;
             fish.vy = (fish.y - cy) * 0.2;
             
-            applyRipple(fish.x, fish.y, 1500, 1);
-            spawnFoam(fish.x, fish.y, 6, 1.2);
+            applyRipple(fish.x, fish.y, isTouch ? 450 : 1500, rippleSize);
+            spawnFoam(fish.x, fish.y, isTouch ? 3 : 6, isTouch ? 0.7 : 1.2);
             break; // Stop checking after hitting one fish
           }
         }
@@ -608,8 +610,8 @@ const PixelWater = ({ isPaused = false }) => {
 
       // 3. Just a regular water ripple if nothing was hit
       if (!hitSomething) {
-        applyRipple(cx, cy, 2000, 1);
-        spawnFoam(cx, cy, e.pointerType === 'touch' ? 4 : 3, 0.8);
+        applyRipple(cx, cy, isTouch ? 450 : 2000, rippleSize);
+        spawnFoam(cx, cy, isTouch ? 2 : 3, isTouch ? 0.5 : 0.8);
       }
     };
 
