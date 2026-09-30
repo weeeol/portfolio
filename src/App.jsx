@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import PortfolioGUI from './PortfolioGUI';
 import StartupIntro from './StartupIntro';

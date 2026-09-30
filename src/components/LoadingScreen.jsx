@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import woodTexture from '../assets/wood.png'; 
 
 const LoadingScreen = ({ loadingText, subText }) => {

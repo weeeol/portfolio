@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import fishImgSrc from './assets/Salmon.png';
 import boatImgSrc from './assets/Boat1.png';
 

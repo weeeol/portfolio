@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PixelWater from './PixelWater';
 import LoadingScreen from './components/LoadingScreen';
 import HeroSection from './components/HeroSection';
@@ -19,21 +19,19 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled }) => {
   // Animation states
   const [showName, setShowName] = useState(false);
   const [isDripping, setIsDripping] = useState(false);
-  const [drops, setDrops] = useState([]);
+  const [drops] = useState(() => Array.from({ length: 35 }).map(() => ({
+    left: 10 + Math.random() * 80,
+    delay: Math.random() * 2,
+    duration: 0.5 + Math.random() * 0.7,
+    size: Math.random() > 0.5 ? 4 : 8,
+    color: Math.random() > 0.5 ? '#1ca3ec' : '#0e74af'
+  })));
 
   // Scroll Navigation State
   const [activeSection, setActiveSection] = useState('hero');
   const [showSideNav, setShowSideNav] = useState(false);
 
   useEffect(() => {
-    const generatedDrops = Array.from({ length: 35 }).map(() => ({
-      left: 10 + Math.random() * 80,
-      delay: Math.random() * 2,
-      duration: 0.5 + Math.random() * 0.7,
-      size: Math.random() > 0.5 ? 4 : 8,
-      color: Math.random() > 0.5 ? '#1ca3ec' : '#0e74af'
-    }));
-    setDrops(generatedDrops);
 
     const texts = ["Generating world...", "Packing inventory...", "Watering crops...", "Ready!"];
     const timer1 = setTimeout(() => setSubText(texts[1]), 800);

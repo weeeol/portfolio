@@ -1,20 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 const HeroSection = ({ showName, isDripping, drops }) => {
   const [isGlowing, setIsGlowing] = useState(false);
   const [isPulsing, setIsPulsing] = useState(false);
 
   useEffect(() => {
-    if (showName) {
-      // Start the glow animation slightly before it completely finishes rising (1000ms)
-      const timer1 = setTimeout(() => setIsGlowing(true), 1000);
-      // Once it has faded in, start the continuous pulse animation (2000ms)
-      const timer2 = setTimeout(() => setIsPulsing(true), 2000);
-      return () => { clearTimeout(timer1); clearTimeout(timer2); };
-    } else {
+    if (!showName) {
+      return;
+    }
+
+    // Start the glow animation slightly before it completely finishes rising (1000ms)
+    const timer1 = setTimeout(() => setIsGlowing(true), 1000);
+    // Once it has faded in, start the continuous pulse animation (2000ms)
+    const timer2 = setTimeout(() => setIsPulsing(true), 2000);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
       setIsGlowing(false);
       setIsPulsing(false);
-    }
+    };
   }, [showName]);
 
   const baseShadow = "4px 4px 0px #8b5a2b, -2px -2px 0px #4a2e1b, 2px -2px 0px #4a2e1b, -2px 2px 0px #4a2e1b, 2px 2px 0px #4a2e1b, 0 0 25px rgba(252, 211, 77, 0), 0 0 50px rgba(252, 211, 77, 0)";

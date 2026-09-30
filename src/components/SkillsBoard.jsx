@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import woodTexture from '../assets/wood.png';
 import paperTexture from '../assets/paper1.png';
 
