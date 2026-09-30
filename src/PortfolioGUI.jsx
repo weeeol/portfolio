@@ -45,14 +45,14 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled, onReplayBootIntro }) => {
       setTimeout(() => {
         setShowName(true);
 
-        // When the text breaches the surface (about 400ms into the transition), fire the big splashes
+          // When the text breaches the surface, add a restrained set of ripples.
         setTimeout(() => {
           const y = window.innerHeight / 2;
           const w = window.innerWidth;
 
-          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2, y: y, strength: 4000, size: 4 } }));
-          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2 - 200, y: y, strength: 3000, size: 3 } }));
-          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2 + 200, y: y, strength: 3000, size: 3 } }));
+          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2, y: y, strength: 1200, size: 2 } }));
+          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2 - 200, y: y, strength: 800, size: 1 } }));
+          window.dispatchEvent(new CustomEvent('trigger-splash', { detail: { x: w / 2 + 200, y: y, strength: 800, size: 1 } }));
 
           setIsDripping(true);
         }, 400);
