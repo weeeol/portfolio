@@ -32,5 +32,13 @@ export const projectsData = [
   {
     title: "Campus Placement Database",
     desc: "Designed a relational MySQL database system to track student drive registrations, interview processes and recruitment metrics."
+  },
+   {
+    title: "ShaderGraph",
+    desc: "A fast, web-based visual node editor for authoring WebGL2 shaders, enabling real-time shader creation and previewing."
+  },
+   {
+    title: "TokenVibe-AI",
+    desc: "Semantic Design System Generator that leverages AI to create cohesive design systems from a single token, streamlining the design process."
   }
 ];

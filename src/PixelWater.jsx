@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react';
-import fishImgSrc from './assets/Salmon.png';
+import salmonImgSrc from './assets/Salmon.png';
+import redMulletImgSrc from './assets/Red_Mullet.png';
+import herringImgSrc from './assets/Herring.png';
+import stingrayImgSrc from './assets/Stingray.png';
 import boatImgSrc from './assets/Boat1.png';
 import m3 from './water/matrix';
 import { compileShader, fragmentShaderSource, vertexShaderSource } from './water/shaders';
@@ -88,22 +91,29 @@ const PixelWater = ({ isPaused = false }) => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-   const fishTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, fishTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    const fishSources = [salmonImgSrc, redMulletImgSrc, herringImgSrc, stingrayImgSrc];
+    const fishTextures = fishSources.map(() => {
+      const texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      return texture;
+    });
 
-    const fishImg = new Image();
-    fishImg.src = fishImgSrc;
-    fishImg.onload = () => {
-      if (!isMounted) return; 
+    const fishImages = fishSources.map((source, index) => {
+      const image = new Image();
+      image.src = source;
+      image.onload = () => {
+        if (!isMounted) return;
 
-      gl.bindTexture(gl.TEXTURE_2D, fishTexture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, fishImg);
-    };
+        gl.bindTexture(gl.TEXTURE_2D, fishTextures[index]);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      };
+      return image;
+    });
 
     const boatTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, boatTexture);
@@ -163,7 +173,7 @@ const PixelWater = ({ isPaused = false }) => {
 
     let animationFrame;
     
-    const fishes = createFishes(8, window.innerWidth, window.innerHeight);
+    const fishes = createFishes(8, window.innerWidth, window.innerHeight, fishSources.length);
     const foam = createFoam();
     const boatInfo = createBoatInfo();
     const applyRipple = (x, y, strength, size) => applyRippleToBuffer(previous, cols, rows, scale, yScale, x, y, strength, size);
@@ -274,10 +284,13 @@ const PixelWater = ({ isPaused = false }) => {
       
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-      if (fishImg.complete && fishImg.naturalWidth > 0) {
-        gl.bindTexture(gl.TEXTURE_2D, fishTexture);
+      if (fishImages.some(image => image.complete && image.naturalWidth > 0)) {
 
         fishes.forEach(fish => {
+          const fishImage = fishImages[fish.spriteIndex];
+          if (!fishImage.complete || fishImage.naturalWidth === 0) return;
+          gl.bindTexture(gl.TEXTURE_2D, fishTextures[fish.spriteIndex]);
+
           if (fish.isJumping) {
              fish.z += fish.vz;
              fish.vz -= 0.6; 
@@ -350,6 +363,10 @@ const PixelWater = ({ isPaused = false }) => {
               fish.vy = -Math.abs(fish.vy) * 0.5;
             }
           }
+          // Keep the water shadow attached to the fish's horizontal position
+          // while its sprite is lifted by the jump height.
+          fish.shadowX = fish.x;
+          fish.shadowY = fish.y;
 
           const isFacingLeft = fish.vx < 0;
           const fw = 48; 
@@ -357,17 +374,6 @@ const PixelWater = ({ isPaused = false }) => {
           let matrix;
 
           if (fish.isJumping) {
-             matrix = m3.projection(width, height);
-             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
-             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1); 
-             matrix = m3.translate(matrix, -fw/2, -fh/2);
-             matrix = m3.scale(matrix, fw, fh);
-
-             gl.uniformMatrix3fv(matrixLoc, false, matrix);
-             gl.uniform1f(alphaLoc, 0.15);
-             gl.uniform1i(isShadowLoc, 1);
-             gl.drawArrays(gl.TRIANGLES, 0, 6);
-             
              const imgOffset = Math.PI / 2; // Assuming Salmon.png points UP
              const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2) + imgOffset;
              matrix = m3.projection(width, height);
@@ -648,11 +654,13 @@ const PixelWater = ({ isPaused = false }) => {
       document.removeEventListener('scroll', handleScroll, true);
       cancelAnimationFrame(animationFrame);
       isMounted = false; 
-      fishImg.onload = null;
+      fishImages.forEach(image => {
+        image.onload = null;
+      });
       boatImg.onload = null;
       
       gl.deleteTexture(waterTexture);
-      gl.deleteTexture(fishTexture);
+      fishTextures.forEach(texture => gl.deleteTexture(texture));
       gl.deleteTexture(boatTexture);
       gl.deleteTexture(foamTexture);
       gl.deleteBuffer(positionBuffer);

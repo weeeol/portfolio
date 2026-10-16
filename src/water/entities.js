@@ -1,13 +1,21 @@
-export const createFishes = (count, width, height) => Array.from({ length: count }, () => ({
-  x: Math.random() * width,
-  y: Math.random() * height,
-  vx: (Math.random() - 0.5) * 0.8,
-  vy: 0,
-  z: 0,
-  vz: 0,
-  isJumping: false,
-  phase: Math.random() * Math.PI * 2,
-}));
+export const createFishes = (count, width, height, spriteCount = 1) => Array.from({ length: count }, () => {
+  const x = Math.random() * width;
+  const y = Math.random() * height;
+
+  return {
+    x,
+    y,
+    shadowX: x,
+    shadowY: y,
+    spriteIndex: Math.floor(Math.random() * spriteCount),
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: 0,
+    z: 0,
+    vz: 0,
+    isJumping: false,
+    phase: Math.random() * Math.PI * 2,
+  };
+});
 
 export const createFoam = () => [];
 
