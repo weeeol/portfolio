@@ -66,6 +66,20 @@ Check code quality with ESLint:
 npm run lint
 ```
 
+### Updating packages
+
+Update installed dependencies and `package-lock.json` within the version ranges declared in
+`package.json`:
+
+```bash
+npm run update:packages
+```
+
+The repository also runs this command on the first day of each month through GitHub Actions.
+After linting and building successfully, it opens a pull request for review instead of changing
+the deployed application automatically. You can run the workflow manually from the **Actions**
+tab with **Monthly package updates** → **Run workflow**.
+
 ## Project Structure
 
 ```text

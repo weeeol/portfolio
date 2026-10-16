@@ -1,0 +1,48 @@
+name: Monthly package updates
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install current dependencies
+        run: npm ci
+
+      - name: Update packages within declared ranges
+        run: npm run update:packages
+
+      - name: Validate updated dependencies
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Open update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update npm packages'
+          title: 'chore: monthly npm package updates'
+          body: |
+            This PR was created by the monthly package update workflow.
+
+            Updated packages are limited to the version ranges declared in `package.json`.
+            The workflow runs linting and a production build before opening this PR.
+          branch: chore/monthly-package-updates
+          delete-branch: true
