@@ -89,6 +89,34 @@ const DraggableNote = ({ title, content, initialRotation }) => {
 };
 
 const SkillsBoard = () => {
+  const skillGroups = [
+    {
+      title: 'Languages',
+      rotation: -2,
+      content: 'C, C++, C#, Java, Python<br/>JavaScript, Kotlin<br/>HTML, CSS'
+    },
+    {
+      title: 'Web Development',
+      rotation: 1,
+      content: 'React, Next.js, Node.js<br/>FastAPI, Vite<br/>REST APIs, responsive UI'
+    },
+    {
+      title: 'Game Dev & Design',
+      rotation: -1,
+      content: 'Unreal Engine, Unity<br/>Blender, Pygame<br/>Gameplay systems, 3D design'
+    },
+    {
+      title: 'Data & Platforms',
+      rotation: 2,
+      content: 'SQLite, MySQL<br/>Vercel, Render<br/>Git, Linux'
+    },
+    {
+      title: 'AI Agents',
+      rotation: -1,
+      content: 'Google Gemini, Google AI Studio<br/>OpenAI API, Agents SDK<br/>Tool use, orchestration, workflows'
+    }
+  ];
+
   return (
     <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
       <div
@@ -101,22 +129,15 @@ const SkillsBoard = () => {
 
         <h2 className="text-[12px] md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-2 md:border-b-4 border-[#8b5a2b] pb-2 md:pb-3 inline-block mt-4 md:mt-4">Bulletin Board: Skills</h2>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] md:text-sm lg:text-sm pt-8 pb-4 h-auto lg:h-[350px] w-full mt-4 md:mt-0">
-          <DraggableNote
-            title="Languages"
-            initialRotation={-2}
-            content="C, C++, C#, Java, Python<br/>JavaScript, React, Kotlin<br/>HTML, CSS"
-          />
-          <DraggableNote
-            title="Game Dev & Design"
-            initialRotation={1}
-            content="Unreal Engine, Unity <br/>Blender"
-          />
-          <DraggableNote
-            title="Tools & Frameworks"
-            initialRotation={-1}
-            content="Node.js, Next.js, FastAPI, Vite <br/>SQLite, MySQL, <br/>Vercel, Render, Git, Linux"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 justify-items-stretch items-stretch gap-6 text-[10px] md:text-sm lg:text-sm pt-8 pb-4 w-full mt-4 md:mt-0">
+          {skillGroups.map((group) => (
+            <DraggableNote
+              key={group.title}
+              title={group.title}
+              initialRotation={group.rotation}
+              content={group.content}
+            />
+          ))}
         </div>
       </div>
     </section>
