@@ -50,8 +50,6 @@ const ProjectLedger = () => {
     contentsPages.push(projectsData.slice(index, index + contentsEntriesPerPage));
   }
 
-  const detailStartPage = contentsPages.length + 1;
-
   const pageHeight = Math.round(bookWidth * PAGE_ASPECT_RATIO);
   const pages = [
     { type: 'cover' },
@@ -113,6 +111,15 @@ const ProjectLedger = () => {
     if (coverHoldAnimation.current) window.cancelAnimationFrame(coverHoldAnimation.current);
   }, []);
   const openPage = (pageIndex) => bookRef.current?.pageFlip().flip(pageIndex, 'top');
+  const openChapter = (projectIndex) => {
+    const chapterPageIndex = pages.findIndex(
+      (page) => page.type === 'chapter' && page.index === projectIndex,
+    );
+
+    if (chapterPageIndex >= 0) {
+      bookRef.current?.pageFlip().turnToPage(chapterPageIndex);
+    }
+  };
   const spread = Math.floor(currentPage / 2) + 1;
   const totalSpreads = Math.ceil((pages.length - 1) / 2);
 
@@ -120,7 +127,7 @@ const ProjectLedger = () => {
     <button
       key={project.title}
       type="button"
-      onClick={() => openPage(detailStartPage + projectIndex)}
+      onClick={() => openChapter(projectIndex)}
       onPointerMove={(event) => event.stopPropagation()}
       onPointerEnter={(event) => event.stopPropagation()}
       className="ledger-contents-entry"
@@ -147,7 +154,7 @@ const ProjectLedger = () => {
         </button>
         {project.link && (
           <a href={project.link} target="_blank" rel="noreferrer" className="ledger-inline-button">
-            Visit repository →
+            Visit →
           </a>
         )}
       </div>

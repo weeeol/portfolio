@@ -35,10 +35,13 @@ export const projectsData = [
   },
    {
     title: "ShaderGraph",
+    link: "https://github.com/weeeol/ShaderGraph",
     desc: "A fast, web-based visual node editor for authoring WebGL2 shaders, enabling real-time shader creation and previewing."
   },
    {
     title: "TokenVibe-AI",
+    link: "https://main.d3akg76erj026z.amplifyapp.com",
     desc: "Semantic Design System Generator that leverages AI to create cohesive design systems from a single token, streamlining the design process."
+
   }
 ];
