@@ -120,16 +120,16 @@ const SkillsBoard = () => {
   return (
     <section id="skills" className="w-full flex flex-col items-center justify-center p-4 bg-transparent min-h-screen snap-start">
       <div
-        className="bulletin-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[8px] md:border-[12px] border-[#8b5a2b] p-4 md:p-15 shadow-[6px_6px_0_rgba(0,0,0,0.5)] md:shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center h-auto min-h-[600px] md:min-h-0"
+        className="bulletin-board skills-board max-w-6xl w-full text-center bg-[#e6c17a]/95 border-[8px] md:border-[12px] border-[#8b5a2b] p-4 md:p-15 shadow-[6px_6px_0_rgba(0,0,0,0.5)] md:shadow-[10px_10px_0_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-center items-center h-auto min-h-[600px] md:min-h-0"
         style={{ backgroundImage: `url(${woodTexture})`, backgroundSize: 'cover', backgroundBlendMode: 'multiply' }}
       >
 
         <div className="absolute top-2 left-2 md:top-4 md:left-4 w-4 h-4 md:w-6 md:h-6 bg-red-600 rounded-full shadow-md border-b-2 md:border-b-4 border-red-800"></div>
         <div className="absolute top-2 right-2 md:top-4 md:right-4 w-4 h-4 md:w-6 md:h-6 bg-blue-600 rounded-full shadow-md border-b-2 md:border-b-4 border-blue-800"></div>
 
-        <h2 className="text-[12px] md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-2 md:border-b-4 border-[#8b5a2b] pb-2 md:pb-3 inline-block mt-4 md:mt-4">Bulletin Board: Skills</h2>
+        <h2 className="skills-board-title text-[12px] md:text-2xl uppercase tracking-widest text-[#4a2e1b] border-b-2 md:border-b-4 border-[#8b5a2b] pb-2 md:pb-3 inline-block mt-4 md:mt-4">Bulletin Board: Skills</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 justify-items-stretch items-stretch gap-6 text-[10px] md:text-sm lg:text-sm pt-8 pb-4 w-full mt-4 md:mt-0">
+        <div className="skills-board-notes grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 justify-items-stretch items-stretch gap-6 text-[10px] md:text-sm lg:text-sm pt-8 pb-4 w-full mt-4 md:mt-0">
           {skillGroups.map((group) => (
             <DraggableNote
               key={group.title}

@@ -46,12 +46,190 @@
   display: none;
 }
 
+.profile-stats-heading {
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  color: #4a2e1b;
+  border-bottom: 4px solid #8b5a2b;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 24px;
+  margin-bottom: 18px;
+}
+
+.profile-stat {
+  min-width: 0;
+  min-height: 92px;
+  padding: 12px 0;
+  color: #4a2e1b;
+  border-bottom: 2px solid rgba(139, 90, 43, 0.55);
+  font-family: "Press Start 2P", monospace;
+}
+
+.profile-stat span {
+  display: block;
+  margin-bottom: 10px;
+  color: #8b5a2b;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profile-stat strong {
+  display: block;
+  font-size: 11px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.profile-stats-copy {
+  grid-column: 1 / -1;
+  color: #4a2e1b;
+  font-family: "Press Start 2P", monospace;
+  font-size: 11px;
+  line-height: 2.2;
+}
+
+.profile-stats-copy p {
+  margin: 0;
+}
+
+.skills-board {
+  min-height: clamp(560px, 84vmin, 780px);
+  padding: clamp(1.25rem, 3.5vmin, 3.75rem);
+}
+
+.skills-board-title {
+  position: relative;
+  top: clamp(-1.5rem, -2.5vmin, -0.75rem);
+  margin-top: clamp(0.75rem, 2vmin, 1rem);
+  padding-bottom: clamp(0.5rem, 1.2vmin, 0.75rem);
+  font-size: clamp(1rem, 3vmin, 1.8rem);
+}
+
+.skills-board-notes {
+  gap: clamp(1rem, 2vmin, 1.5rem);
+  padding-top: clamp(1rem, 3vmin, 2rem);
+  padding-bottom: clamp(0.5rem, 1.5vmin, 1rem);
+  font-size: clamp(0.7rem, 1.35vmin, 0.875rem);
+}
+
+.skills-board-notes > div {
+  min-height: clamp(190px, 24vmin, 270px);
+  padding: clamp(0.75rem, 1.8vmin, 1.5rem);
+  border-width: clamp(3px, 0.45vmin, 4px);
+}
+
+.skills-board-notes h3 {
+  margin-bottom: clamp(1.15rem, 2.6vmin, 1.75rem);
+  font-size: clamp(0.9rem, 2.2vmin, 1.5rem);
+}
+
+.skills-board-notes p {
+  font-size: clamp(0.7rem, 1.3vmin, 0.875rem);
+  line-height: clamp(2.1, 2.6vmin, 3);
+}
+
+.skills-board-notes p br {
+  display: block;
+  content: "";
+  margin-bottom: clamp(0.2rem, 0.5vmin, 0.35rem);
+}
+
+.about-identity-name {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
 @media (max-width: 767px) {
   .hero-name {
     background-size: 100% 180%;
     filter:
       drop-shadow(3px 4px 0 rgba(74, 46, 27, 0.38))
       drop-shadow(0 0 3px rgba(255, 236, 146, 0.18));
+  }
+
+  .profile-stats-heading {
+    margin-bottom: 24px;
+    font-size: 1rem;
+  }
+
+  .profile-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-stat {
+    min-height: 104px;
+    padding: 14px 0;
+  }
+
+  .profile-stat span {
+    margin-bottom: 12px;
+    font-size: 11px;
+  }
+
+  .profile-stat strong {
+    font-size: 12px;
+    line-height: 1.9;
+  }
+
+  .profile-stats-copy {
+    font-size: 10px;
+    line-height: 2.2;
+  }
+
+  .skills-board {
+    min-height: clamp(580px, 94svh, 780px);
+    padding: clamp(1rem, 5vw, 1.5rem);
+  }
+
+  .skills-board-notes {
+    font-size: clamp(0.6rem, 2.5vw, 0.75rem);
+  }
+
+  .skills-board-notes > div {
+    min-height: clamp(210px, 44vw, 280px);
+    padding: clamp(0.75rem, 4vw, 1.5rem);
+  }
+
+  .skills-board-notes h3 {
+    font-size: clamp(0.9rem, 4.5vw, 1.4rem);
+  }
+
+  .skills-board-notes p {
+    font-size: clamp(0.6rem, 2.5vw, 0.8rem);
+    line-height: 2.5;
+  }
+
+  .about-identity-name {
+    font-size: 10px;
+  }
+
+  .about-identity-role {
+    font-size: 12px;
+  }
+
+  .about-social-links svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .about-social-links span {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-stats-grid {
+    grid-template-columns: 1fr;
   }
 }
 
