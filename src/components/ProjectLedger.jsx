@@ -77,12 +77,15 @@ const ProjectLedger = () => {
       window.cancelAnimationFrame(coverHoldAnimation.current);
       coverHoldAnimation.current = null;
     }
+    coverHoldStartedAt.current = 0;
     setCoverHoldProgress(0);
   };
   const startCoverHold = () => {
     clearCoverHold();
-    coverHoldStartedAt.current = performance.now();
     const updateProgress = (timestamp) => {
+      if (coverHoldStartedAt.current === 0) {
+        coverHoldStartedAt.current = timestamp;
+      }
       const progress = Math.min(1, (timestamp - coverHoldStartedAt.current) / 700);
       setCoverHoldProgress(progress);
       if (progress < 1) {
