@@ -38,7 +38,7 @@ export const createBoatInfo = () => ({
   vx: 0,
   vy: 0,
   active: false,
-  timeUntilNext: 200,
+  timeUntilNext: 60,
 });
 
 export const applyRipple = (previous, cols, rows, scale, yScale, clientX, clientY, strength, size) => {

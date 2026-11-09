@@ -294,6 +294,9 @@ const PixelWater = ({ isPaused = false }) => {
     let scrollAccumulator = 0;
 
     const boatInfo = createBoatInfo();
+    boatInfo.pitch = 0;
+    boatInfo.roll = 0;
+    boatInfo.heave = 0;
 
     const applyRipple = (x, y, strength, size) => {
       const cx = Math.floor(x / scale);
@@ -590,48 +593,82 @@ const PixelWater = ({ isPaused = false }) => {
         }
       }
 
-      // --- Update Boat ---
+      // --- Update Boat (Smooth Buoyancy & Level Horizontal Cruising) ---
       if (!boatInfo.active) {
         boatInfo.timeUntilNext--;
         if (boatInfo.timeUntilNext <= 0) {
           boatInfo.active = true;
-          boatInfo.y = 100 + Math.random() * (height - 200);
-          boatInfo.vx = 1.5 + Math.random() * 1.5;
-          boatInfo.vy = (Math.random() - 0.5) * 0.8;
+          boatInfo.y = 120 + Math.random() * (height - 240);
+          boatInfo.vx = 1.3 + Math.random() * 0.7;
+          boatInfo.vy = 0; // Lock to level horizontal path
+          boatInfo.pitch = 0;
+          boatInfo.heave = 0;
           if (Math.random() > 0.5) {
             boatInfo.x = width + 100;
             boatInfo.vx = -boatInfo.vx;
           } else {
             boatInfo.x = -100;
           }
-          spawnFoam(boatInfo.x, boatInfo.y, 4, 0.5);
+          spawnFoam(boatInfo.x, boatInfo.y, 3, 0.4);
         }
         boatShadowMesh.visible = false;
         boatHullMesh.visible = false;
       } else {
         boatInfo.x += boatInfo.vx;
-        boatInfo.y += boatInfo.vy;
-
-        applyRipple(boatInfo.x - (boatInfo.vx * 15), boatInfo.y, 400, 0);
-        applyRipple(boatInfo.x, boatInfo.y, 150, 0);
-        if (Math.random() < 0.08) spawnFoam(boatInfo.x - boatInfo.vx * 12, boatInfo.y, 1, 0.4);
-
-        if (boatInfo.x > width + 200 || boatInfo.x < -200 || boatInfo.y < -200 || boatInfo.y > height + 200) {
-          boatInfo.active = false;
-          boatInfo.timeUntilNext = 300 + Math.random() * 600;
-        }
 
         const isFacingLeft = boatInfo.vx < 0;
-        const angle = Math.atan2(boatInfo.vy, Math.abs(boatInfo.vx));
+        const dirX = isFacingLeft ? -1 : 1;
 
+        // Low-pass filtered wave sampling to prevent high-frequency vibration
+        const sampleWaveHeight = (wx, wy) => {
+          const cx = Math.floor(wx / scale);
+          const cy = Math.floor(wy / (scale * yScale));
+          if (cx > 1 && cx < cols - 2 && cy > 1 && cy < rows - 2) {
+            const idx = cx + cy * cols;
+            const avg = (current[idx] + current[idx - 1] + current[idx + 1] + current[idx - cols] + current[idx + cols]) * 0.2;
+            return Math.max(-15, Math.min(15, avg * 0.08));
+          }
+          return 0;
+        };
+
+        // Buoyancy Heave: Lively oceanic float and responsive bounce on waves
+        const waveCenter = sampleWaveHeight(boatInfo.x, boatInfo.y);
+        const ambientHeave = Math.sin(time * 2.8 + boatInfo.x * 0.018) * 3.5 + Math.cos(time * 1.8) * 1.2;
+        const targetHeave = waveCenter + ambientHeave;
+
+        // Gentle, clamped pitch rocking matching the bounce (bow tilts ~4 degrees max)
+        const waveFront = sampleWaveHeight(boatInfo.x + dirX * 24, boatInfo.y);
+        const waveBack = sampleWaveHeight(boatInfo.x - dirX * 24, boatInfo.y);
+        const wavePitch = (waveBack - waveFront) * 0.025;
+        const ambientPitch = Math.sin(time * 3.0 + boatInfo.x * 0.02) * 0.045;
+        const targetPitch = Math.max(-0.075, Math.min(0.075, wavePitch + ambientPitch));
+
+        // Smooth spring damping for lively, buoyant bounce without vibration
+        boatInfo.heave += (targetHeave - boatInfo.heave) * 0.12;
+        boatInfo.pitch += (targetPitch - boatInfo.pitch) * 0.08;
+
+        // Stern wake ripples placed well behind the boat to prevent self-interference
+        applyRipple(boatInfo.x - dirX * 32, boatInfo.y, 200, 0);
+        if (Math.random() < 0.08) {
+          spawnFoam(boatInfo.x - dirX * 25, boatInfo.y, 1, 0.3);
+        }
+
+        if (boatInfo.x > width + 200 || boatInfo.x < -200) {
+          boatInfo.active = false;
+          boatInfo.timeUntilNext = 60 + Math.random() * 90;
+        }
+
+        // Surface Shadow stays strictly horizontal on the water surface
         boatShadowMesh.visible = true;
-        boatShadowMesh.position.set(Math.floor(boatInfo.x), Math.floor(boatInfo.y + 10), 1.5);
-        boatShadowMesh.rotation.z = isFacingLeft ? -angle : angle;
+        boatShadowMesh.position.set(boatInfo.x, boatInfo.y + 10, 1.5);
+        boatShadowMesh.rotation.set(0, 0, 0);
         boatShadowMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
+        boatShadowMaterial.opacity = Math.max(0.18, Math.min(0.42, 0.35 * (1 - boatInfo.heave * 0.04)));
 
+        // Boat Hull: stays level & horizontal in 2D with calm, subtle vertical bobbing
         boatHullMesh.visible = true;
-        boatHullMesh.position.set(Math.floor(boatInfo.x), Math.floor(boatInfo.y), 3);
-        boatHullMesh.rotation.z = isFacingLeft ? -angle : angle;
+        boatHullMesh.position.set(boatInfo.x, boatInfo.y - boatInfo.heave, 3);
+        boatHullMesh.rotation.set(0, 0, isFacingLeft ? -boatInfo.pitch : boatInfo.pitch);
         boatHullMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
       }
 
