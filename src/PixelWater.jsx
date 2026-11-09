@@ -10,6 +10,14 @@ import {
   createBoatInfo,
   createFishes,
 } from './water/entities';
+import {
+  createCenteredQuadGeometry,
+  createWaterGeometry,
+} from './water/geometry';
+import { applyParallaxLayers, createCursorParallax } from './water/parallax';
+import { updateWaterSimulation } from './water/simulation';
+import { renderFish } from './water/fish';
+import { updateBoat } from './water/boat';
 
 // Disable Three.js automated sRGB gamma curve to prevent pixel art washing out
 THREE.ColorManagement.enabled = false;
@@ -18,54 +26,6 @@ THREE.ColorManagement.enabled = false;
 const packRGBA = (r, g, b, a = 255) => ((a << 24) | (b << 16) | (g << 8) | r) >>> 0;
 const waterColors32 = new Uint32Array(waterColors.map(c => packRGBA(c[0], c[1], c[2])));
 const baseColor32 = waterColors32[2];
-
-const createWaterGeometry = (w, h) => {
-  const geo = new THREE.BufferGeometry();
-  const positions = new Float32Array([
-    0, 0, 0,
-    w, 0, 0,
-    0, h, 0,
-    0, h, 0,
-    w, 0, 0,
-    w, h, 0,
-  ]);
-  const uvs = new Float32Array([
-    0, 0,
-    1, 0,
-    0, 1,
-    0, 1,
-    1, 0,
-    1, 1,
-  ]);
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-  return geo;
-};
-
-const createCenteredQuadGeometry = (w, h) => {
-  const geo = new THREE.BufferGeometry();
-  const hw = w * 0.5;
-  const hh = h * 0.5;
-  const positions = new Float32Array([
-    -hw, -hh, 0,
-     hw, -hh, 0,
-    -hw,  hh, 0,
-    -hw,  hh, 0,
-     hw, -hh, 0,
-     hw,  hh, 0,
-  ]);
-  const uvs = new Float32Array([
-    0, 0,
-    1, 0,
-    0, 1,
-    0, 1,
-    1, 0,
-    1, 1,
-  ]);
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-  return geo;
-};
 
 const PixelWater = ({ isPaused = false }) => {
   const canvasRef = useRef(null);
@@ -297,47 +257,14 @@ const PixelWater = ({ isPaused = false }) => {
     let sinTableI = null;
     let stretchTableI = null;
     let waterTexture = null;
-    const dampening = 0.94;
     let lastScrollPosition = 0;
     let scrollAccumulator = 0;
     let lastTiltRipple = 0;
 
-    const parallax = {
-      targetX: 0,
-      targetY: 0,
-      x: 0,
-      y: 0,
-      orientationEnabled: false,
-    };
-
-    const updatePointerParallax = (clientX, clientY) => {
-      parallax.targetX = Math.max(-1, Math.min(1, (clientX / width) * 2 - 1));
-      parallax.targetY = Math.max(-1, Math.min(1, (clientY / height) * 2 - 1));
-    };
-
-    const handleDeviceOrientation = (event) => {
-      if (event.gamma == null || event.beta == null) return;
-      parallax.orientationEnabled = true;
-      // gamma is left/right tilt and beta is front/back tilt. Clamp to keep
-      // small phone movements from causing a distracting camera swing.
-      parallax.targetX = Math.max(-1, Math.min(1, event.gamma / 28));
-      parallax.targetY = Math.max(-1, Math.min(1, (event.beta - 35) / 28));
-    };
-
-    const requestOrientationPermission = () => {
-      const OrientationEvent = window.DeviceOrientationEvent;
-      if (!OrientationEvent || typeof OrientationEvent.requestPermission !== 'function') return;
-      if (parallax.orientationEnabled) return;
-      OrientationEvent.requestPermission()
-        .then(permission => {
-          if (permission === 'granted') {
-            window.addEventListener('deviceorientation', handleDeviceOrientation, true);
-          }
-        })
-        .catch(error => {
-          console.warn('Device orientation parallax is unavailable:', error);
-        });
-    };
+    const parallax = createCursorParallax({
+      getWidth: () => width,
+      getHeight: () => height,
+    });
 
     const boatInfo = createBoatInfo();
     boatInfo.pitch = 0;
@@ -450,94 +377,30 @@ const PixelWater = ({ isPaused = false }) => {
 
       const time = timestamp * 0.001;
 
-      parallax.x += (parallax.targetX - parallax.x) * 0.08;
-      parallax.y += (parallax.targetY - parallax.y) * 0.08;
+      const { x, y } = parallax.update();
 
-      const layerX = parallax.x * 14;
-      const layerY = parallax.y * 9;
-      waterLayer.position.set(layerX * 0.2, layerY * 0.2, 0);
-      fishLayer.position.set(layerX * 0.75, layerY * 0.75, 0);
-      fishLayer.rotation.z = parallax.x * -0.006;
-      boatLayer.position.set(layerX * 1.6, layerY * 1.6, 0);
-      boatLayer.rotation.z = parallax.x * -0.012;
-      foamLayer.position.set(layerX * 1.25, layerY * 1.25, 0);
+      applyParallaxLayers({ water: waterLayer, fish: fishLayer, boat: boatLayer, foam: foamLayer }, x, y);
 
       // A restrained stream of tilt-led ripples makes the surface feel like it
       // is flowing downhill without flooding the low-resolution simulation.
-      if (Math.abs(parallax.x) + Math.abs(parallax.y) > 0.2 && timestamp - lastTiltRipple > 180) {
-        const rippleX = width * (0.5 + parallax.x * 0.18);
-        const rippleY = height * (0.5 + parallax.y * 0.18);
+      if (Math.abs(x) + Math.abs(y) > 0.2 && timestamp - lastTiltRipple > 180) {
+        const rippleX = width * (0.5 + x * 0.18);
+        const rippleY = height * (0.5 + y * 0.18);
         applyRipple(rippleX, rippleY, 20, 0);
         lastTiltRipple = timestamp;
       }
 
-      // Fast single-pass 32-bit clear
-      pixelData32.fill(baseColor32);
-
-      // Simulation Step with hoisting of row-invariant trigonometry
-      for (let j = 1; j < rows - 1; j++) {
-        const j_cols = j * cols;
-        const jMinus1_cols = j_cols - cols;
-        const jPlus1_cols = j_cols + cols;
-
-        const jPhaseBase = j * 0.12 + time * 1.5;
-        const jDashBreak = Math.sin(j * 0.1) * 2;
-        const causticJ = Math.sin(j * 0.3 + time * 0.7);
-        const causticJBase = -time * 1.1 + j * 0.08;
-
-        for (let i = 1; i < cols - 1; i++) {
-          const idx = i + j_cols;
-
-          current[idx] = (
-            previous[i - 1 + j_cols] +
-            previous[i + 1 + j_cols] +
-            previous[i + jMinus1_cols] +
-            previous[i + jPlus1_cols]
-          ) * 0.5 - current[idx];
-
-          current[idx] *= dampening;
-
-          const val = current[idx];
-          let colorIndex = 2;
-          let stretch = 1;
-
-          const wavePhase = jPhaseBase + sinTableI[i];
-          const lineNoise = Math.sin(wavePhase);
-          const dashBreak = Math.sin(i * 0.15 + jDashBreak);
-          const caustic = Math.sin(i * 0.18 + causticJBase) * causticJ;
-
-          if (lineNoise > 0.995 && dashBreak > 0.3) {
-            colorIndex = 1;
-            stretch = 2 + stretchTableI[i];
-          }
-
-          if (caustic > 0.97 && lineNoise > 0.72 && dashBreak > 0.1) {
-            colorIndex = 1;
-            stretch = 1;
-          }
-
-          if (val > 2 || val < -2) {
-            if (val > 20) { colorIndex = 0; stretch = 1; }
-            else if (val > 5) { colorIndex = 1; stretch = 1; }
-            else if (val < -10) { colorIndex = 4; stretch = 1; }
-            else if (val < -4) { colorIndex = 3; stretch = 1; }
-          }
-
-          if (colorIndex !== 2) {
-            const c = waterColors32[colorIndex];
-            for (let s = 0; s < stretch; s++) {
-              const sx = i + s;
-              if (sx >= cols) break;
-              pixelData32[sx + j_cols] = c;
-            }
-            if (stretch > 1) i += stretch - 1;
-          }
-        }
-      }
-
-      const temp = previous;
-      previous = current;
-      current = temp;
+      ({ current, previous } = updateWaterSimulation({
+        current,
+        previous,
+        cols,
+        rows,
+        time,
+        sinTable: sinTableI,
+        stretchTable: stretchTableI,
+        pixelData32,
+        waterColors32,
+      }));
 
       if (waterTexture) {
         waterTexture.needsUpdate = true;
@@ -628,116 +491,25 @@ const PixelWater = ({ isPaused = false }) => {
         fish.shadowX = fish.x;
         fish.shadowY = fish.y;
 
-        const isFacingLeft = fish.vx < 0;
-        const { shadowMesh, hullMesh, shadowMaterial } = fishMeshPairs[idx];
-
-        if (fish.isJumping) {
-          const imgOffset = Math.PI / 2;
-          const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2) + imgOffset;
-
-          shadowMesh.visible = true;
-          shadowMesh.position.set(Math.floor(fish.x), Math.floor(fish.y), 1);
-          shadowMesh.rotation.z = isFacingLeft ? -jumpAngle : jumpAngle;
-          shadowMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
-          shadowMaterial.opacity = Math.max(0.05, 0.2 * (1 - fish.z / 60));
-
-          hullMesh.visible = true;
-          hullMesh.position.set(Math.floor(fish.x), Math.floor(fish.y - fish.z), 5 + fish.z * 0.05);
-          hullMesh.rotation.z = isFacingLeft ? -jumpAngle : jumpAngle;
-          hullMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
-        } else {
-          const wiggle = Math.sin(time * 5 + fish.x * 0.05 + fish.phase) * 0.1;
-          const imgOffset = Math.PI / 2;
-          const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle + imgOffset;
-
-          shadowMesh.visible = true;
-          shadowMesh.position.set(Math.floor(fish.x), Math.floor(fish.y), 1);
-          shadowMesh.rotation.z = isFacingLeft ? -angle : angle;
-          shadowMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
-          shadowMaterial.opacity = 0.2;
-
-          hullMesh.visible = false;
-        }
+        renderFish(fish, fishMeshPairs[idx], time);
       }
 
-      // --- Update Boat (Smooth Buoyancy & Level Horizontal Cruising) ---
-      if (!boatInfo.active) {
-        boatInfo.timeUntilNext--;
-        if (boatInfo.timeUntilNext <= 0) {
-          boatInfo.active = true;
-          boatInfo.y = 120 + Math.random() * (height - 240);
-          boatInfo.vx = 1.3 + Math.random() * 0.7;
-          boatInfo.vy = 0; // Lock to level horizontal path
-          boatInfo.pitch = 0;
-          boatInfo.heave = 0;
-          if (Math.random() > 0.5) {
-            boatInfo.x = width + 100;
-            boatInfo.vx = -boatInfo.vx;
-          } else {
-            boatInfo.x = -100;
-          }
-          spawnFoam(boatInfo.x, boatInfo.y, 3, 0.4);
-        }
-        boatShadowMesh.visible = false;
-        boatHullMesh.visible = false;
-      } else {
-        boatInfo.x += boatInfo.vx;
-
-        const isFacingLeft = boatInfo.vx < 0;
-        const dirX = isFacingLeft ? -1 : 1;
-
-        // Low-pass filtered wave sampling to prevent high-frequency vibration
-        const sampleWaveHeight = (wx, wy) => {
-          const cx = Math.floor(wx / scale);
-          const cy = Math.floor(wy / (scale * yScale));
-          if (cx > 1 && cx < cols - 2 && cy > 1 && cy < rows - 2) {
-            const idx = cx + cy * cols;
-            const avg = (current[idx] + current[idx - 1] + current[idx + 1] + current[idx - cols] + current[idx + cols]) * 0.2;
-            return Math.max(-15, Math.min(15, avg * 0.08));
-          }
-          return 0;
-        };
-
-        // Buoyancy Heave: Lively oceanic float and responsive bounce on waves
-        const waveCenter = sampleWaveHeight(boatInfo.x, boatInfo.y);
-        const ambientHeave = Math.sin(time * 2.8 + boatInfo.x * 0.018) * 3.5 + Math.cos(time * 1.8) * 1.2;
-        const targetHeave = waveCenter + ambientHeave;
-
-        // Gentle, clamped pitch rocking matching the bounce (bow tilts ~4 degrees max)
-        const waveFront = sampleWaveHeight(boatInfo.x + dirX * 24, boatInfo.y);
-        const waveBack = sampleWaveHeight(boatInfo.x - dirX * 24, boatInfo.y);
-        const wavePitch = (waveBack - waveFront) * 0.025;
-        const ambientPitch = Math.sin(time * 3.0 + boatInfo.x * 0.02) * 0.045;
-        const targetPitch = Math.max(-0.075, Math.min(0.075, wavePitch + ambientPitch));
-
-        // Smooth spring damping for lively, buoyant bounce without vibration
-        boatInfo.heave += (targetHeave - boatInfo.heave) * 0.12;
-        boatInfo.pitch += (targetPitch - boatInfo.pitch) * 0.08;
-
-        // Stern wake ripples placed well behind the boat to prevent self-interference
-        applyRipple(boatInfo.x - dirX * 32, boatInfo.y, 200, 0);
-        if (Math.random() < 0.08) {
-          spawnFoam(boatInfo.x - dirX * 25, boatInfo.y, 1, 0.3);
-        }
-
-        if (boatInfo.x > width + 200 || boatInfo.x < -200) {
-          boatInfo.active = false;
-          boatInfo.timeUntilNext = 60 + Math.random() * 90;
-        }
-
-        // Surface Shadow stays strictly horizontal on the water surface
-        boatShadowMesh.visible = true;
-        boatShadowMesh.position.set(boatInfo.x, boatInfo.y + 10, 1.5);
-        boatShadowMesh.rotation.set(0, 0, 0);
-        boatShadowMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
-        boatShadowMaterial.opacity = Math.max(0.18, Math.min(0.42, 0.35 * (1 - boatInfo.heave * 0.04)));
-
-        // Boat Hull: stays level & horizontal in 2D with calm, subtle vertical bobbing
-        boatHullMesh.visible = true;
-        boatHullMesh.position.set(boatInfo.x, boatInfo.y - boatInfo.heave, 3);
-        boatHullMesh.rotation.set(0, 0, isFacingLeft ? -boatInfo.pitch : boatInfo.pitch);
-        boatHullMesh.scale.set(isFacingLeft ? -1 : 1, 1, 1);
-      }
+      updateBoat({
+        boatInfo,
+        boatShadowMesh,
+        boatHullMesh,
+        boatShadowMaterial,
+        width,
+        height,
+        scale,
+        yScale,
+        current,
+        cols,
+        rows,
+        time,
+        applyRipple,
+        spawnFoam,
+      });
 
       // --- Update Foam Particles via In-Place Swap-and-Pop (Zero Allocations) ---
       for (let i = activeFoamCount - 1; i >= 0; i--) {
@@ -800,8 +572,8 @@ const PixelWater = ({ isPaused = false }) => {
 
       const x = e.clientX;
       const y = e.clientY;
-      if (!parallax.orientationEnabled && e.pointerType !== 'touch') {
-        updatePointerParallax(x, y);
+      if (e.pointerType !== 'touch') {
+        parallax.updatePointer(x, y);
       }
       const isTouch = e.pointerType === 'touch';
       const rippleStrength = isTouch ? 20 : 150;
@@ -844,17 +616,13 @@ const PixelWater = ({ isPaused = false }) => {
 
     const handlePointerLeave = () => {
       lastPointer = null;
-      if (!parallax.orientationEnabled) {
-        parallax.targetX = 0;
-        parallax.targetY = 0;
-      }
+      parallax.reset();
     };
 
     const handlePointerDown = (e) => {
       if (isPausedRef.current) return;
       if (e.target instanceof Element && e.target.closest('[data-water-ignore]')) return;
-      requestOrientationPermission();
-      if (!parallax.orientationEnabled) updatePointerParallax(e.clientX, e.clientY);
+      parallax.updatePointer(e.clientX, e.clientY);
       const cx = e.clientX;
       const cy = e.clientY;
       const isTouch = e.pointerType === 'touch';
@@ -909,7 +677,6 @@ const PixelWater = ({ isPaused = false }) => {
     };
 
     window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
     window.addEventListener('pointerleave', handlePointerLeave);
     window.addEventListener('pointerup', handlePointerLeave);
     window.addEventListener('pointercancel', handlePointerLeave);
@@ -924,7 +691,6 @@ const PixelWater = ({ isPaused = false }) => {
       isMounted = false;
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('deviceorientation', handleDeviceOrientation, true);
       window.removeEventListener('pointerleave', handlePointerLeave);
       window.removeEventListener('pointerup', handlePointerLeave);
       window.removeEventListener('pointercancel', handlePointerLeave);
