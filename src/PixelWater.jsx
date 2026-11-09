@@ -6,7 +6,8 @@ import stingrayImgSrc from './assets/Stingray.png';
 import boatImgSrc from './assets/Boat1.png';
 import m3 from './water/matrix';
 import { compileShader, fragmentShaderSource, vertexShaderSource } from './water/shaders';
-import { quadVertices, waterColors } from './water/constants';
+import { waterColors, waterQuadVertices } from './water/constants';
+import { pushAABBQuad, pushRotatedQuad } from './water/batch';
 import {
   applyRipple as applyRippleToBuffer,
   applyWaveLine as applyWaveLineToBuffer,
@@ -45,24 +46,47 @@ const PixelWater = ({ isPaused = false }) => {
     gl.useProgram(program);
 
     // Get Locations
-    const positionLoc = gl.getAttribLocation(program, "a_position");
-    const texCoordLoc = gl.getAttribLocation(program, "a_texCoord");
-    const matrixLoc = gl.getUniformLocation(program, "u_matrix");
-    const imageLoc = gl.getUniformLocation(program, "u_image");
-    const alphaLoc = gl.getUniformLocation(program, "u_alpha");
-    const isShadowLoc = gl.getUniformLocation(program, "u_isShadow");
-    const tintLoc = gl.getUniformLocation(program, "u_tint");
+    const positionLoc = gl.getAttribLocation(program, 'a_position');
+    const texCoordLoc = gl.getAttribLocation(program, 'a_texCoord');
+    const alphaLoc = gl.getAttribLocation(program, 'a_alpha');
+    const isShadowLoc = gl.getAttribLocation(program, 'a_isShadow');
+    const matrixLoc = gl.getUniformLocation(program, 'u_matrix');
+    const imageLoc = gl.getUniformLocation(program, 'u_image');
+    const tintLoc = gl.getUniformLocation(program, 'u_tint');
 
-    // Setup Unit Quad Buffers (0 to 1)
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
+    // Setup Water Quad Buffer (Static: 6 vertices * 6 floats = 36 floats)
+    const waterBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, waterBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, waterQuadVertices, gl.STATIC_DRAW);
 
-    const texCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, quadVertices, gl.STATIC_DRAW);
+    // Dynamic Sprite & Particle Batch Buffer
+    // Shared for fishes, boat, and foam to eliminate per-draw-call buffer allocations
+    const MAX_FOAM = 500;
+    const MAX_FISH = 8;
+    const batchBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, batchBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, MAX_FOAM * 36 * 4, gl.DYNAMIC_DRAW);
 
-    // Alpha Blending for Fishes
+    // Reusable typed arrays to eliminate heap allocations during the render loop
+    const fishBufferData = new Float32Array(MAX_FISH * 36);
+    const boatBufferData = new Float32Array(2 * 36);
+    const foamBufferData = new Float32Array(MAX_FOAM * 36);
+
+    const setupVertexAttributes = () => {
+      gl.enableVertexAttribArray(positionLoc);
+      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 24, 0);
+
+      gl.enableVertexAttribArray(texCoordLoc);
+      gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 24, 8);
+
+      gl.enableVertexAttribArray(alphaLoc);
+      gl.vertexAttribPointer(alphaLoc, 1, gl.FLOAT, false, 24, 16);
+
+      gl.enableVertexAttribArray(isShadowLoc);
+      gl.vertexAttribPointer(isShadowLoc, 1, gl.FLOAT, false, 24, 20);
+    };
+
+    // Alpha Blending
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -77,7 +101,8 @@ const PixelWater = ({ isPaused = false }) => {
     const yScale = 0.5;
     let width, height, cols, rows;
     let current, previous, pixelData, basePixelData;
-    let dampening = 0.94;
+    let projectionMatrix, waterMatrix;
+    const dampening = 0.94;
     let isMounted = true;
     let isDocumentActive = !document.hidden;
     let lastScrollPosition = 0;
@@ -91,33 +116,53 @@ const PixelWater = ({ isPaused = false }) => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
+    // Single Texture Atlas for all fish varieties (4 fish sprites x 48px = 192x48)
+    // Allows drawing all fish varieties in ONE draw call without texture swaps
     const fishSources = [salmonImgSrc, redMulletImgSrc, herringImgSrc, stingrayImgSrc];
-    const fishTextures = fishSources.map(() => {
-      const texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      return texture;
-    });
+    const FISH_SPRITE_SIZE = 48;
+    const atlasWidth = fishSources.length * FISH_SPRITE_SIZE;
+    const atlasHeight = FISH_SPRITE_SIZE;
+
+    const fishAtlasTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, fishAtlasTexture);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      atlasWidth,
+      atlasHeight,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array(atlasWidth * atlasHeight * 4)
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
     const fishImages = fishSources.map((source, index) => {
       const image = new Image();
       image.src = source;
       image.onload = () => {
         if (!isMounted) return;
-
-        gl.bindTexture(gl.TEXTURE_2D, fishTextures[index]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.bindTexture(gl.TEXTURE_2D, fishAtlasTexture);
+        gl.texSubImage2D(
+          gl.TEXTURE_2D,
+          0,
+          index * FISH_SPRITE_SIZE,
+          0,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          image
+        );
       };
       return image;
     });
 
     const boatTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, boatTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,0])); 
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -126,8 +171,7 @@ const PixelWater = ({ isPaused = false }) => {
     const boatImg = new Image();
     boatImg.src = boatImgSrc;
     boatImg.onload = () => {
-      if (!isMounted) return; 
-
+      if (!isMounted) return;
       gl.bindTexture(gl.TEXTURE_2D, boatTexture);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, boatImg);
     };
@@ -158,22 +202,30 @@ const PixelWater = ({ isPaused = false }) => {
 
       pixelData = new Uint8Array(cols * rows * 4);
       basePixelData = new Uint8Array(cols * rows * 4);
-      
-      for(let k = 0; k < cols * rows; k++) {
+
+      for (let k = 0; k < cols * rows; k++) {
         const idx = k * 4;
         basePixelData[idx] = waterColors[2][0];
-        basePixelData[idx+1] = waterColors[2][1];
-        basePixelData[idx+2] = waterColors[2][2];
-        basePixelData[idx+3] = 255;
+        basePixelData[idx + 1] = waterColors[2][1];
+        basePixelData[idx + 2] = waterColors[2][2];
+        basePixelData[idx + 3] = 255;
       }
+
+      // Pre-compute projection and water matrix to avoid matrix math in the render loop
+      projectionMatrix = m3.projection(width, height);
+      waterMatrix = m3.scale(projectionMatrix, cols * scale, rows * scale * yScale);
+
+      // Allocate water texture storage once on resize; updates will use texSubImage2D
+      gl.bindTexture(gl.TEXTURE_2D, waterTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     };
 
     window.addEventListener('resize', resize);
     resize();
 
     let animationFrame;
-    
-    const fishes = createFishes(8, window.innerWidth, window.innerHeight, fishSources.length);
+
+    const fishes = createFishes(MAX_FISH, window.innerWidth, window.innerHeight, fishSources.length);
     const foam = createFoam();
     const boatInfo = createBoatInfo();
     const applyRipple = (x, y, strength, size) => applyRippleToBuffer(previous, cols, rows, scale, yScale, x, y, strength, size);
@@ -187,24 +239,25 @@ const PixelWater = ({ isPaused = false }) => {
     const draw = (timestamp) => {
       animationFrame = requestAnimationFrame(draw);
 
-      if (isPausedRef.current) return; // Skip updating physics/drawing when paused
+      if (isPausedRef.current) return;
       if (timestamp - lastFrameTime < frameDuration) return;
       lastFrameTime = timestamp;
 
       const time = timestamp * 0.001;
       pixelData.set(basePixelData);
 
+      // Simulation Step
       for (let j = 1; j < rows - 1; j++) {
         const j_cols = j * cols;
         const jMinus1_cols = j_cols - cols;
         const jPlus1_cols = j_cols + cols;
-        
+
         const jPhaseBase = j * 0.12 + time * 1.5;
         const jDashBreak = Math.sin(j * 0.1) * 2;
 
         for (let i = 1; i < cols - 1; i++) {
           const idx = i + j_cols;
-          
+
           current[idx] = (
             previous[i - 1 + j_cols] +
             previous[i + 1 + j_cols] +
@@ -214,7 +267,7 @@ const PixelWater = ({ isPaused = false }) => {
 
           current[idx] *= dampening;
 
-          let val = current[idx];
+          const val = current[idx];
           let colorIndex = 2;
           let stretch = 1;
 
@@ -222,10 +275,10 @@ const PixelWater = ({ isPaused = false }) => {
           const lineNoise = Math.sin(wavePhase);
           const dashBreak = Math.sin(i * 0.15 + jDashBreak);
           const caustic = Math.sin(i * 0.18 - time * 1.1 + j * 0.08) * Math.sin(j * 0.3 + time * 0.7);
-          
-          if (lineNoise > 0.995 && dashBreak > 0.3) { 
-            colorIndex = 1; 
-            stretch = 2 + Math.floor(Math.abs(Math.cos(i * 0.2)) * 3); 
+
+          if (lineNoise > 0.995 && dashBreak > 0.3) {
+            colorIndex = 1;
+            stretch = 2 + Math.floor(Math.abs(Math.cos(i * 0.2)) * 3);
           }
 
           if (caustic > 0.97 && lineNoise > 0.72 && dashBreak > 0.1) {
@@ -247,10 +300,10 @@ const PixelWater = ({ isPaused = false }) => {
               if (sx >= cols) break;
               const pIdx = (sx + j * cols) * 4;
               pixelData[pIdx] = c[0];
-              pixelData[pIdx+1] = c[1];
-              pixelData[pIdx+2] = c[2];
+              pixelData[pIdx + 1] = c[1];
+              pixelData[pIdx + 2] = c[2];
             }
-            if (stretch > 1) i += stretch - 1; 
+            if (stretch > 1) i += stretch - 1;
           }
         }
       }
@@ -259,96 +312,95 @@ const PixelWater = ({ isPaused = false }) => {
       previous = current;
       current = temp;
 
-      gl.clearColor(14/255, 116/255, 175/255, 1.0);
+      gl.clearColor(14 / 255, 116 / 255, 175 / 255, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
-      gl.enableVertexAttribArray(positionLoc);
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.vertexAttribPointer(positionLoc, 2, gl.FLOAT, false, 0, 0);
-
-      gl.enableVertexAttribArray(texCoordLoc);
-      gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-      gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+      // --- Draw Call 1: Water Surface ---
+      gl.bindBuffer(gl.ARRAY_BUFFER, waterBuffer);
+      setupVertexAttributes();
 
       gl.bindTexture(gl.TEXTURE_2D, waterTexture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
+      // Fast in-place texture update without driver reallocation overhead
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, cols, rows, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
 
-      let waterMatrix = m3.projection(width, height);
-      waterMatrix = m3.scale(waterMatrix, cols * scale, rows * scale * yScale);
-      
       gl.uniformMatrix3fv(matrixLoc, false, waterMatrix);
-      gl.uniform1f(alphaLoc, 1.0);
-      gl.uniform1i(isShadowLoc, 0);
       gl.uniform4f(tintLoc, 1, 1, 1, 1);
-      gl.uniform1i(imageLoc, 0); 
-      
+      gl.uniform1i(imageLoc, 0);
+
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+      // --- Batched Sprites & Particles ---
+      // Uses projectionMatrix once for all batched 2D quads
+      gl.uniformMatrix3fv(matrixLoc, false, projectionMatrix);
+      gl.bindBuffer(gl.ARRAY_BUFFER, batchBuffer);
+      setupVertexAttributes();
+
+      // --- Draw Call 2: All Fishes (Batched into 1 Draw Call) ---
       if (fishImages.some(image => image.complete && image.naturalWidth > 0)) {
+        let fishQuadCount = 0;
 
         fishes.forEach(fish => {
           const fishImage = fishImages[fish.spriteIndex];
           if (!fishImage.complete || fishImage.naturalWidth === 0) return;
-          gl.bindTexture(gl.TEXTURE_2D, fishTextures[fish.spriteIndex]);
 
           if (fish.isJumping) {
-             fish.z += fish.vz;
-             fish.vz -= 0.6; 
-             fish.x += fish.vx * 1.5; 
-             fish.y += fish.vy * 1.5;
-             
-             if (fish.z <= 0) {
-               fish.z = 0;
-               fish.isJumping = false;
-               applyRipple(fish.x, fish.y, 900, 1);
-             }
+            fish.z += fish.vz;
+            fish.vz -= 0.6;
+            fish.x += fish.vx * 1.5;
+            fish.y += fish.vy * 1.5;
+
+            if (fish.z <= 0) {
+              fish.z = 0;
+              fish.isJumping = false;
+              applyRipple(fish.x, fish.y, 900, 1);
+            }
           } else {
-             let nearbyX = 0;
-             let nearbyY = 0;
-             let nearbyCount = 0;
-             let separationX = 0;
-             let separationY = 0;
-             fishes.forEach(other => {
-               if (other === fish) return;
-               const distance = Math.hypot(other.x - fish.x, other.y - fish.y);
-               if (distance < 180) {
-                 nearbyX += other.x;
-                 nearbyY += other.y;
-                 nearbyCount++;
-               }
-               if (distance > 0 && distance < 70) {
-                 const separation = (70 - distance) / 70;
-                 separationX -= ((other.x - fish.x) / distance) * separation;
-                 separationY -= ((other.y - fish.y) / distance) * separation;
-               }
-             });
-             if (nearbyCount) {
-               fish.vx += ((nearbyX / nearbyCount - fish.x) * 0.00015);
-               fish.vy += ((nearbyY / nearbyCount - fish.y) * 0.00015);
-             }
-             fish.vx += separationX * 0.018;
-             fish.vy += separationY * 0.018;
-             fish.phase += 0.06;
-             fish.vy += Math.sin(fish.phase) * 0.006;
-             fish.vx = Math.max(-0.7, Math.min(0.7, fish.vx));
-             fish.vy = Math.max(-0.35, Math.min(0.35, fish.vy));
-             fish.x += fish.vx;
-             fish.y += fish.vy;
-             
-             if (Math.random() < 0.0005) { 
-                fish.isJumping = true;
-                fish.vz = 6 + Math.random() * 6;
-                applyRipple(fish.x, fish.y, -400, 0); 
-                 spawnFoam(fish.x, fish.y, 3, 0.8);
-             }
-             
-             if (Math.random() < 0.05) {
-                fish.vx += (Math.random() - 0.5) * 0.15;
-                const speed = Math.abs(fish.vx);
-                if (speed > 0.7) {
-                  fish.vx = (fish.vx / speed) * 0.7;
-                }
-             }
+            let nearbyX = 0;
+            let nearbyY = 0;
+            let nearbyCount = 0;
+            let separationX = 0;
+            let separationY = 0;
+            fishes.forEach(other => {
+              if (other === fish) return;
+              const distance = Math.hypot(other.x - fish.x, other.y - fish.y);
+              if (distance < 180) {
+                nearbyX += other.x;
+                nearbyY += other.y;
+                nearbyCount++;
+              }
+              if (distance > 0 && distance < 70) {
+                const separation = (70 - distance) / 70;
+                separationX -= ((other.x - fish.x) / distance) * separation;
+                separationY -= ((other.y - fish.y) / distance) * separation;
+              }
+            });
+            if (nearbyCount) {
+              fish.vx += ((nearbyX / nearbyCount - fish.x) * 0.00015);
+              fish.vy += ((nearbyY / nearbyCount - fish.y) * 0.00015);
+            }
+            fish.vx += separationX * 0.018;
+            fish.vy += separationY * 0.018;
+            fish.phase += 0.06;
+            fish.vy += Math.sin(fish.phase) * 0.006;
+            fish.vx = Math.max(-0.7, Math.min(0.7, fish.vx));
+            fish.vy = Math.max(-0.35, Math.min(0.35, fish.vy));
+            fish.x += fish.vx;
+            fish.y += fish.vy;
+
+            if (Math.random() < 0.0005) {
+              fish.isJumping = true;
+              fish.vz = 6 + Math.random() * 6;
+              applyRipple(fish.x, fish.y, -400, 0);
+              spawnFoam(fish.x, fish.y, 3, 0.8);
+            }
+
+            if (Math.random() < 0.05) {
+              fish.vx += (Math.random() - 0.5) * 0.15;
+              const speed = Math.abs(fish.vx);
+              if (speed > 0.7) {
+                fish.vx = (fish.vx / speed) * 0.7;
+              }
+            }
           }
 
           if (fish.x < -50) fish.x = width + 50;
@@ -363,125 +415,141 @@ const PixelWater = ({ isPaused = false }) => {
               fish.vy = -Math.abs(fish.vy) * 0.5;
             }
           }
-          // Keep the water shadow attached to the fish's horizontal position
-          // while its sprite is lifted by the jump height.
           fish.shadowX = fish.x;
           fish.shadowY = fish.y;
 
           const isFacingLeft = fish.vx < 0;
-          const fw = 48; 
+          const fw = 48;
           const fh = 48;
-          let matrix;
+          const u0 = fish.spriteIndex * 0.25;
+          const u1 = u0 + 0.25;
+          const v0 = 0.0;
+          const v1 = 1.0;
 
           if (fish.isJumping) {
-             const imgOffset = Math.PI / 2; // Assuming Salmon.png points UP
-             const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2) + imgOffset;
-             matrix = m3.projection(width, height);
-             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
-             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
-             matrix = m3.translate(matrix, 0, -fish.z);
-             matrix = m3.rotate(matrix, jumpAngle);
-             matrix = m3.translate(matrix, -fw/2, -fh/2);
-             matrix = m3.scale(matrix, fw, fh);
-
-             gl.uniformMatrix3fv(matrixLoc, false, matrix);
-             gl.uniform1f(alphaLoc, 1.0);
-             gl.uniform1i(isShadowLoc, 0);
-             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            const imgOffset = Math.PI / 2;
+            const jumpAngle = Math.atan2(-fish.vz, Math.abs(fish.vx) * 2) + imgOffset;
+            pushRotatedQuad(
+              fishBufferData,
+              fishQuadCount * 36,
+              Math.floor(fish.x),
+              Math.floor(fish.y),
+              fw,
+              fh,
+              jumpAngle,
+              isFacingLeft,
+              -fish.z,
+              u0, v0, u1, v1,
+              1.0,
+              0.0
+            );
+            fishQuadCount++;
           } else {
-             const wiggle = Math.sin(time * 5 + fish.x * 0.05 + fish.phase) * 0.1;
-             // Add Math.PI / 2 if the image points UP by default, or just use wiggle if we want it strictly horizontal
-             const imgOffset = Math.PI / 2; // Assuming Salmon.png points UP
-             const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle + imgOffset;
-
-             matrix = m3.projection(width, height);
-             matrix = m3.translate(matrix, Math.floor(fish.x), Math.floor(fish.y));
-             if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
-             matrix = m3.rotate(matrix, angle);
-             matrix = m3.translate(matrix, -fw/2, -fh/2);
-             matrix = m3.scale(matrix, fw, fh);
-
-             gl.uniformMatrix3fv(matrixLoc, false, matrix);
-             gl.uniform1f(alphaLoc, 0.2);
-             gl.uniform1i(isShadowLoc, 1); 
-             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            const wiggle = Math.sin(time * 5 + fish.x * 0.05 + fish.phase) * 0.1;
+            const imgOffset = Math.PI / 2;
+            const angle = (Math.atan2(fish.vy, Math.abs(fish.vx)) * 0.5) + wiggle + imgOffset;
+            pushRotatedQuad(
+              fishBufferData,
+              fishQuadCount * 36,
+              Math.floor(fish.x),
+              Math.floor(fish.y),
+              fw,
+              fh,
+              angle,
+              isFacingLeft,
+              0,
+              u0, v0, u1, v1,
+              0.2,
+              1.0
+            );
+            fishQuadCount++;
           }
         });
-      }
 
-      if (boatImg.complete && boatImg.naturalWidth > 0) {
-        gl.bindTexture(gl.TEXTURE_2D, boatTexture);
-
-        if (!boatInfo.active) {
-           boatInfo.timeUntilNext--;
-           if (boatInfo.timeUntilNext <= 0) {
-              boatInfo.active = true;
-              boatInfo.y = 100 + Math.random() * (height - 200);
-              boatInfo.vx = 1.5 + Math.random() * 1.5;
-              boatInfo.vy = (Math.random() - 0.5) * 0.8;
-              if (Math.random() > 0.5) {
-                 boatInfo.x = width + 100;
-                 boatInfo.vx = -boatInfo.vx;
-              } else {
-                 boatInfo.x = -100;
-              }
-              spawnFoam(boatInfo.x, boatInfo.y, 4, 0.5);
-           }
-        } else {
-           boatInfo.x += boatInfo.vx;
-           boatInfo.y += boatInfo.vy;
-           
-           // Apply a constant ripple at the boat's center.
-           // The simulation automatically propagates this outwards locally creating a V-shaped wake!
-           applyRipple(boatInfo.x - (boatInfo.vx * 15), boatInfo.y, 400, 0);
-           applyRipple(boatInfo.x, boatInfo.y, 150, 0);
-           if (Math.random() < 0.08) spawnFoam(boatInfo.x - boatInfo.vx * 12, boatInfo.y, 1, 0.4);
-
-           if (boatInfo.x > width + 200 || boatInfo.x < -200 || boatInfo.y < -200 || boatInfo.y > height + 200) {
-              boatInfo.active = false;
-              boatInfo.timeUntilNext = 300 + Math.random() * 600; 
-           }
-
-           const isFacingLeft = boatInfo.vx < 0;
-           // Maintain original aspect ratio and scale it to a reasonable size
-           const targetWidth = 80;
-           const aspectRatio = boatImg.naturalHeight / boatImg.naturalWidth;
-           const bw = targetWidth; 
-           const bh = targetWidth * aspectRatio;
-           const angle = Math.atan2(boatInfo.vy, Math.abs(boatInfo.vx));
-
-           // Draw Boat Shadow
-           let matrix = m3.projection(width, height);
-           matrix = m3.translate(matrix, Math.floor(boatInfo.x), Math.floor(boatInfo.y) + 10);
-           if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
-           matrix = m3.rotate(matrix, angle);
-           matrix = m3.translate(matrix, -bw/2, -bh/2);
-           matrix = m3.scale(matrix, bw, bh);
-
-           gl.uniformMatrix3fv(matrixLoc, false, matrix);
-           gl.uniform1f(alphaLoc, 0.3);
-           gl.uniform1i(isShadowLoc, 1); 
-           gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-           // Draw Boat
-           matrix = m3.projection(width, height);
-           matrix = m3.translate(matrix, Math.floor(boatInfo.x), Math.floor(boatInfo.y));
-           if (isFacingLeft) matrix = m3.scale(matrix, -1, 1);
-           matrix = m3.rotate(matrix, angle);
-           matrix = m3.translate(matrix, -bw/2, -bh/2);
-           matrix = m3.scale(matrix, bw, bh);
-
-           gl.uniformMatrix3fv(matrixLoc, false, matrix);
-           gl.uniform1f(alphaLoc, 1.0);
-           gl.uniform1i(isShadowLoc, 0); 
-           gl.uniform4f(tintLoc, 1, 1, 1, 1);
-           gl.drawArrays(gl.TRIANGLES, 0, 6);
+        if (fishQuadCount > 0) {
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, fishBufferData.subarray(0, fishQuadCount * 36));
+          gl.bindTexture(gl.TEXTURE_2D, fishAtlasTexture);
+          gl.drawArrays(gl.TRIANGLES, 0, fishQuadCount * 6);
         }
       }
 
-      gl.bindTexture(gl.TEXTURE_2D, foamTexture);
-      gl.uniform1i(isShadowLoc, 0);
-      gl.uniform4f(tintLoc, 0.78, 0.96, 1, 1);
+      // --- Draw Call 3: Boat (Shadow + Hull in 1 Draw Call) ---
+      if (boatImg.complete && boatImg.naturalWidth > 0) {
+        if (!boatInfo.active) {
+          boatInfo.timeUntilNext--;
+          if (boatInfo.timeUntilNext <= 0) {
+            boatInfo.active = true;
+            boatInfo.y = 100 + Math.random() * (height - 200);
+            boatInfo.vx = 1.5 + Math.random() * 1.5;
+            boatInfo.vy = (Math.random() - 0.5) * 0.8;
+            if (Math.random() > 0.5) {
+              boatInfo.x = width + 100;
+              boatInfo.vx = -boatInfo.vx;
+            } else {
+              boatInfo.x = -100;
+            }
+            spawnFoam(boatInfo.x, boatInfo.y, 4, 0.5);
+          }
+        } else {
+          boatInfo.x += boatInfo.vx;
+          boatInfo.y += boatInfo.vy;
+
+          applyRipple(boatInfo.x - (boatInfo.vx * 15), boatInfo.y, 400, 0);
+          applyRipple(boatInfo.x, boatInfo.y, 150, 0);
+          if (Math.random() < 0.08) spawnFoam(boatInfo.x - boatInfo.vx * 12, boatInfo.y, 1, 0.4);
+
+          if (boatInfo.x > width + 200 || boatInfo.x < -200 || boatInfo.y < -200 || boatInfo.y > height + 200) {
+            boatInfo.active = false;
+            boatInfo.timeUntilNext = 300 + Math.random() * 600;
+          }
+
+          const isFacingLeft = boatInfo.vx < 0;
+          const targetWidth = 80;
+          const aspectRatio = boatImg.naturalHeight / boatImg.naturalWidth;
+          const bw = targetWidth;
+          const bh = targetWidth * aspectRatio;
+          const angle = Math.atan2(boatInfo.vy, Math.abs(boatInfo.vx));
+
+          // Boat Shadow Quad (Offset 0)
+          pushRotatedQuad(
+            boatBufferData,
+            0,
+            Math.floor(boatInfo.x),
+            Math.floor(boatInfo.y),
+            bw,
+            bh,
+            angle,
+            isFacingLeft,
+            10,
+            0, 0, 1, 1,
+            0.3,
+            1.0
+          );
+
+          // Boat Hull Quad (Offset 36)
+          pushRotatedQuad(
+            boatBufferData,
+            36,
+            Math.floor(boatInfo.x),
+            Math.floor(boatInfo.y),
+            bw,
+            bh,
+            angle,
+            isFacingLeft,
+            0,
+            0, 0, 1, 1,
+            1.0,
+            0.0
+          );
+
+          gl.bufferSubData(gl.ARRAY_BUFFER, 0, boatBufferData);
+          gl.bindTexture(gl.TEXTURE_2D, boatTexture);
+          gl.drawArrays(gl.TRIANGLES, 0, 12);
+        }
+      }
+
+      // --- Draw Call 4: All Foam Particles (Batched into 1 Draw Call) ---
+      let foamQuadCount = 0;
       for (let index = foam.length - 1; index >= 0; index--) {
         const drop = foam[index];
         drop.life -= 0.018;
@@ -492,14 +560,27 @@ const PixelWater = ({ isPaused = false }) => {
           foam.splice(index, 1);
           continue;
         }
-        let matrix = m3.projection(width, height);
-        matrix = m3.translate(matrix, Math.floor(drop.x), Math.floor(drop.y));
-        matrix = m3.scale(matrix, Math.ceil(drop.size), Math.ceil(drop.size));
-        gl.uniformMatrix3fv(matrixLoc, false, matrix);
-        gl.uniform1f(alphaLoc, Math.min(1, drop.life * 2));
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        if (foamQuadCount < MAX_FOAM) {
+          pushAABBQuad(
+            foamBufferData,
+            foamQuadCount * 36,
+            Math.floor(drop.x),
+            Math.floor(drop.y),
+            Math.ceil(drop.size),
+            Math.min(1, drop.life * 2)
+          );
+          foamQuadCount++;
+        }
       }
-      gl.uniform4f(tintLoc, 1, 1, 1, 1);
+
+      if (foamQuadCount > 0) {
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, foamBufferData.subarray(0, foamQuadCount * 36));
+        gl.bindTexture(gl.TEXTURE_2D, foamTexture);
+        gl.uniform4f(tintLoc, 0.78, 0.96, 1, 1);
+        gl.drawArrays(gl.TRIANGLES, 0, foamQuadCount * 6);
+        gl.uniform4f(tintLoc, 1, 1, 1, 1);
+      }
     };
 
     const wakeAnimation = () => {
@@ -526,18 +607,17 @@ const PixelWater = ({ isPaused = false }) => {
     // --- Interactive Listeners ---
     const handlePointerMove = (e) => {
       if (isPausedRef.current || !isDocumentActive) return;
-      
+
       const x = e.clientX;
       const y = e.clientY;
       const isTouch = e.pointerType === 'touch';
       const rippleStrength = isTouch ? 20 : 150;
-      
+
       if (lastPointer) {
         const dx = x - lastPointer.x;
         const dy = y - lastPointer.y;
         const dist = Math.hypot(dx, dy);
-        
-        // Prevent huge lines if mouse leaves and re-enters window far away
+
         if (dist < 300) {
           const steps = Math.max(1, Math.floor(dist / 5));
           for (let i = 1; i <= steps; i++) {
@@ -547,9 +627,9 @@ const PixelWater = ({ isPaused = false }) => {
           applyRipple(x, y, rippleStrength, 0);
         }
       } else {
-        applyRipple(x, y, rippleStrength, 0); 
+        applyRipple(x, y, rippleStrength, 0);
       }
-      
+
       lastPointer = { x, y };
     };
 
@@ -579,7 +659,7 @@ const PixelWater = ({ isPaused = false }) => {
       const cy = e.clientY;
       const isTouch = e.pointerType === 'touch';
       const rippleSize = isTouch ? 0 : 1;
-      
+
       let hitSomething = false;
 
       // 1. Check if clicked on the boat
@@ -587,7 +667,6 @@ const PixelWater = ({ isPaused = false }) => {
         const dist = Math.hypot(boatInfo.x - cx, boatInfo.y - cy);
         if (dist < 60) {
           hitSomething = true;
-          // Boat goes into overdrive and creates a massive splash
           boatInfo.vx *= 2.5;
           applyRipple(boatInfo.x, boatInfo.y, isTouch ? 1200 : 5000, isTouch ? 1 : 2);
         }
@@ -597,19 +676,16 @@ const PixelWater = ({ isPaused = false }) => {
       if (!hitSomething) {
         for (const fish of fishes) {
           const dist = Math.hypot(fish.x - cx, fish.y - cy);
-          // If clicked close to a fish that isn't already jumping
           if (dist < 40 && !fish.isJumping) {
             hitSomething = true;
             fish.isJumping = true;
-            fish.vz = 8 + Math.random() * 5; // Launch into the air
-            
-            // Swim frantically away from the click
+            fish.vz = 8 + Math.random() * 5;
             fish.vx = (fish.x - cx) * 0.2;
             fish.vy = (fish.y - cy) * 0.2;
-            
+
             applyRipple(fish.x, fish.y, isTouch ? 450 : 1500, rippleSize);
             spawnFoam(fish.x, fish.y, isTouch ? 3 : 6, isTouch ? 0.7 : 1.2);
-            break; // Stop checking after hitting one fish
+            break;
           }
         }
       }
@@ -653,18 +729,18 @@ const PixelWater = ({ isPaused = false }) => {
       window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('scroll', handleScroll, true);
       cancelAnimationFrame(animationFrame);
-      isMounted = false; 
+      isMounted = false;
       fishImages.forEach(image => {
         image.onload = null;
       });
       boatImg.onload = null;
-      
+
       gl.deleteTexture(waterTexture);
-      fishTextures.forEach(texture => gl.deleteTexture(texture));
+      gl.deleteTexture(fishAtlasTexture);
       gl.deleteTexture(boatTexture);
       gl.deleteTexture(foamTexture);
-      gl.deleteBuffer(positionBuffer);
-      gl.deleteBuffer(texCoordBuffer);
+      gl.deleteBuffer(waterBuffer);
+      gl.deleteBuffer(batchBuffer);
       gl.deleteShader(vs);
       gl.deleteShader(fs);
       gl.deleteProgram(program);
