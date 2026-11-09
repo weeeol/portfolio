@@ -183,12 +183,14 @@ const PixelWater = ({ isPaused = false }) => {
       for (let i = 0; i < count; i++) {
         if (activeFoamCount >= MAX_FOAM) break;
         const p = foamPool[activeFoamCount++];
+        const angle = Math.random() * Math.PI * 2;
+        const speed = (0.8 + Math.random() * 1.4) * burst;
         p.x = x + (Math.random() - 0.5) * 18;
         p.y = y + (Math.random() - 0.5) * 8;
-        p.vx = (Math.random() - 0.5) * 1.8 * burst;
-        p.vy = -Math.random() * 1.8 * burst;
-        p.size = 2 + Math.random() * 4;
-        p.life = 0.45 + Math.random() * 0.45;
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed - 0.8 * burst;
+        p.size = 2 + Math.random() * 4 + burst;
+        p.life = 0.5 + Math.random() * 0.55;
       }
     };
 
@@ -638,6 +640,7 @@ const PixelWater = ({ isPaused = false }) => {
           hitSomething = true;
           boatInfo.vx *= 2.5;
           applyRipple(boatInfo.x, boatInfo.y, isTouch ? 1200 : 5000, isTouch ? 1 : 2);
+          spawnFoam(boatInfo.x, boatInfo.y, isTouch ? 8 : 18, isTouch ? 1 : 1.8);
         }
       }
 
@@ -655,7 +658,7 @@ const PixelWater = ({ isPaused = false }) => {
             fish.vy = (fish.y - cy) * 0.2;
 
             applyRipple(fish.x, fish.y, isTouch ? 450 : 1500, rippleSize);
-            spawnFoam(fish.x, fish.y, isTouch ? 3 : 6, isTouch ? 0.7 : 1.2);
+            spawnFoam(fish.x, fish.y, isTouch ? 8 : 16, isTouch ? 1 : 1.8);
             break;
           }
         }
@@ -664,7 +667,7 @@ const PixelWater = ({ isPaused = false }) => {
       // 3. Regular water ripple if nothing was hit
       if (!hitSomething) {
         applyRipple(cx, cy, isTouch ? 450 : 2000, rippleSize);
-        spawnFoam(cx, cy, isTouch ? 2 : 3, isTouch ? 0.5 : 0.8);
+        spawnFoam(cx, cy, isTouch ? 8 : 20, isTouch ? 1 : 2);
       }
     };
 
