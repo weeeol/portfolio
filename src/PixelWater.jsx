@@ -30,7 +30,7 @@ const PixelWater = ({ isPaused = false }) => {
     if (!canvas) return;
 
     // Initialize WebGL
-    const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
+    const gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: true });
     if (!gl) {
       console.error('WebGL is not supported in your browser.');
       return;
@@ -86,8 +86,9 @@ const PixelWater = ({ isPaused = false }) => {
       gl.vertexAttribPointer(isShadowLoc, 1, gl.FLOAT, false, 24, 20);
     };
 
-    // Alpha Blending
-    gl.enable(gl.BLEND);
+    // Hardware Depth Test & Blending Configuration
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     // --- Config & State ---
@@ -313,9 +314,13 @@ const PixelWater = ({ isPaused = false }) => {
       current = temp;
 
       gl.clearColor(14 / 255, 116 / 255, 175 / 255, 1.0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      // --- Draw Call 1: Water Surface ---
+      // --- Pass 1: Opaque Water Surface (Front-to-Back Base) ---
+      // Disable blending for opaque surface: eliminates read-modify-write memory traffic
+      gl.disable(gl.BLEND);
+      gl.depthMask(true);
+
       gl.bindBuffer(gl.ARRAY_BUFFER, waterBuffer);
       setupVertexAttributes();
 
@@ -329,8 +334,11 @@ const PixelWater = ({ isPaused = false }) => {
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-      // --- Batched Sprites & Particles ---
-      // Uses projectionMatrix once for all batched 2D quads
+      // --- Pass 2: Transparent Batched Sprites & Particles ---
+      // Re-enable blending for transparent sprites and disable depth writes to avoid self-occlusion
+      gl.enable(gl.BLEND);
+      gl.depthMask(false);
+
       gl.uniformMatrix3fv(matrixLoc, false, projectionMatrix);
       gl.bindBuffer(gl.ARRAY_BUFFER, batchBuffer);
       setupVertexAttributes();

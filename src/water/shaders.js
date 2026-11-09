@@ -1,11 +1,11 @@
 export const vertexShaderSource = `
   attribute vec2 a_position;
   attribute vec2 a_texCoord;
-  attribute float a_alpha;
-  attribute float a_isShadow;
-  varying vec2 v_texCoord;
-  varying float v_alpha;
-  varying float v_isShadow;
+  attribute lowp float a_alpha;
+  attribute lowp float a_isShadow;
+  varying mediump vec2 v_texCoord;
+  varying lowp float v_alpha;
+  varying lowp float v_isShadow;
   uniform mat3 u_matrix;
   void main() {
     gl_Position = vec4((u_matrix * vec3(a_position, 1.0)).xy, 0.0, 1.0);
@@ -16,19 +16,18 @@ export const vertexShaderSource = `
 `;
 
 export const fragmentShaderSource = `
-  precision mediump float;
+  precision lowp float;
+  varying mediump vec2 v_texCoord;
+  varying lowp float v_alpha;
+  varying lowp float v_isShadow;
   uniform sampler2D u_image;
-  uniform vec4 u_tint;
-  varying vec2 v_texCoord;
-  varying float v_alpha;
-  varying float v_isShadow;
+  uniform lowp vec4 u_tint;
   void main() {
-    vec4 color = texture2D(u_image, v_texCoord);
-    if (v_isShadow > 0.5) {
-       gl_FragColor = vec4(0.0, 0.0, 0.0, color.a * v_alpha);
-    } else {
-      gl_FragColor = vec4(color.rgb * u_tint.rgb, color.a * v_alpha * u_tint.a);
-    }
+    lowp vec4 color = texture2D(u_image, v_texCoord);
+    lowp float notShadow = 1.0 - v_isShadow;
+    lowp vec3 rgb = color.rgb * (u_tint.rgb * notShadow);
+    lowp float alpha = color.a * v_alpha * mix(u_tint.a, 1.0, v_isShadow);
+    gl_FragColor = vec4(rgb, alpha);
   }
 `;
 
