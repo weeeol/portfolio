@@ -161,7 +161,7 @@ const PortfolioGUI = ({ waterEnabled, setWaterEnabled, onReplayBootIntro }) => {
         {/* Final Footer */}
         <footer className="w-full flex items-center justify-center p-2 md:p-4 bg-[#4a2e1b] text-[8px] md:text-[10px] text-[#e6c17a] border-t-4 md:border-t-8 border-[#8b5a2b] shadow-[inset_0_4px_0_rgba(0,0,0,0.2)] z-10 relative pb-16">
           <div className="w-full text-center tracking-widest leading-loose">
-            © 2026 Veol Steve Jose — made with React, Canvas, and Tailwind
+            © 2026 Veol Steve Jose — made with React, Three.js, and Tailwind
           </div>
         </footer>
 

@@ -5,7 +5,7 @@ A unique, retro-themed personal portfolio built with React 19, Vite, and Tailwin
 ## Features
 
 - **8-Bit RPG Interface**: Vintage fantasy OS styling with CSS `snap-y` full-page scrolling, smooth section navigation, and an interactive taskbar with a live system clock.
-- **Custom WebGL Background (`PixelWater`)**: An interactive 2D/3D WebGL water simulation with sprite kinematics, dynamic wave physics, and cursor splash interactions (with toggle in system settings).
+- **Custom Three.js Background (`PixelWater`)**: An interactive 2D/3D Three.js water simulation with sprite kinematics, dynamic wave physics, and cursor splash interactions (with toggle in system settings).
 - **Draggable Skills Bulletin Board**: Interactive wooden corkboard with freely draggable and pinnable parchment notes for technical skills and toolsets.
 - **Town Ledger (Projects Showcase)**: Paginated fantasy ledger presenting projects, descriptions, and live GitHub/demo links.
 - **Interactive Mini-Game Easter Egg**: Secret arcade mini-game accessible via the Konami-style secret sequence (type `veol` anywhere on the page) to shoot bugs and debug the matrix.
@@ -16,7 +16,7 @@ A unique, retro-themed personal portfolio built with React 19, Vite, and Tailwin
 - **Framework**: React 19 (`react` & `react-dom` 19.3)
 - **Bundler & Tooling**: Vite 8 (`@vitejs/plugin-react`)
 - **Styling**: Tailwind CSS v4 (`@tailwindcss/vite`, PostCSS, Autoprefixer)
-- **Graphics**: Raw WebGL (GLSL Shaders) & HTML5 2D Canvas
+- **Graphics**: Three.js & HTML5 Canvas
 - **Analytics**: `@vercel/analytics`
 - **Linting**: ESLint 10
 
