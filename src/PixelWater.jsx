@@ -101,6 +101,14 @@ const PixelWater = ({ isPaused = false }) => {
     const camera = new THREE.OrthographicCamera(0, 1, 0, 1, -1000, 1000);
     camera.position.set(0, 0, 500);
 
+    // Keep the pixel-perfect orthographic camera while giving each subject its
+    // own shallow depth layer for parallax offsets.
+    const waterLayer = new THREE.Group();
+    const fishLayer = new THREE.Group();
+    const boatLayer = new THREE.Group();
+    const foamLayer = new THREE.Group();
+    scene.add(waterLayer, fishLayer, boatLayer, foamLayer);
+
     const textureLoader = new THREE.TextureLoader();
     const loadPixelTexture = (src, onLoad) => {
       const tex = textureLoader.load(src, onLoad);
@@ -175,11 +183,11 @@ const PixelWater = ({ isPaused = false }) => {
 
     const boatShadowMesh = new THREE.Mesh(boatGeo, boatShadowMaterial);
     boatShadowMesh.visible = false;
-    scene.add(boatShadowMesh);
+    boatLayer.add(boatShadowMesh);
 
     const boatHullMesh = new THREE.Mesh(boatGeo, boatHullMaterial);
     boatHullMesh.visible = false;
-    scene.add(boatHullMesh);
+    boatLayer.add(boatHullMesh);
 
     // Fish Meshes with cloned materials for independent opacity control
     const MAX_FISH = 8;
@@ -190,11 +198,11 @@ const PixelWater = ({ isPaused = false }) => {
       const shadowMaterial = fishShadowMaterials[fish.spriteIndex].clone();
       const shadowMesh = new THREE.Mesh(fishGeo, shadowMaterial);
       shadowMesh.visible = false;
-      scene.add(shadowMesh);
+      fishLayer.add(shadowMesh);
 
       const hullMesh = new THREE.Mesh(fishGeo, fishHullMaterials[fish.spriteIndex]);
       hullMesh.visible = false;
-      scene.add(hullMesh);
+      fishLayer.add(hullMesh);
 
       return { shadowMesh, hullMesh, shadowMaterial };
     });
@@ -256,7 +264,7 @@ const PixelWater = ({ isPaused = false }) => {
     const foamMesh = new THREE.InstancedMesh(foamGeo, foamMaterial, MAX_FOAM);
     foamMesh.count = 0;
     foamMesh.matrixAutoUpdate = false;
-    scene.add(foamMesh);
+    foamLayer.add(foamMesh);
     const dummy = new THREE.Object3D();
     dummy.matrixAutoUpdate = false;
 
@@ -269,7 +277,7 @@ const PixelWater = ({ isPaused = false }) => {
     const waterMesh = new THREE.Mesh(createWaterGeometry(1, 1), waterMaterial);
     waterMesh.position.set(0, 0, 0);
     waterMesh.matrixAutoUpdate = false;
-    scene.add(waterMesh);
+    waterLayer.add(waterMesh);
 
     // --- Simulation State ---
     const getPixelScale = () => {
@@ -292,6 +300,44 @@ const PixelWater = ({ isPaused = false }) => {
     const dampening = 0.94;
     let lastScrollPosition = 0;
     let scrollAccumulator = 0;
+    let lastTiltRipple = 0;
+
+    const parallax = {
+      targetX: 0,
+      targetY: 0,
+      x: 0,
+      y: 0,
+      orientationEnabled: false,
+    };
+
+    const updatePointerParallax = (clientX, clientY) => {
+      parallax.targetX = Math.max(-1, Math.min(1, (clientX / width) * 2 - 1));
+      parallax.targetY = Math.max(-1, Math.min(1, (clientY / height) * 2 - 1));
+    };
+
+    const handleDeviceOrientation = (event) => {
+      if (event.gamma == null || event.beta == null) return;
+      parallax.orientationEnabled = true;
+      // gamma is left/right tilt and beta is front/back tilt. Clamp to keep
+      // small phone movements from causing a distracting camera swing.
+      parallax.targetX = Math.max(-1, Math.min(1, event.gamma / 28));
+      parallax.targetY = Math.max(-1, Math.min(1, (event.beta - 35) / 28));
+    };
+
+    const requestOrientationPermission = () => {
+      const OrientationEvent = window.DeviceOrientationEvent;
+      if (!OrientationEvent || typeof OrientationEvent.requestPermission !== 'function') return;
+      if (parallax.orientationEnabled) return;
+      OrientationEvent.requestPermission()
+        .then(permission => {
+          if (permission === 'granted') {
+            window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+          }
+        })
+        .catch(error => {
+          console.warn('Device orientation parallax is unavailable:', error);
+        });
+    };
 
     const boatInfo = createBoatInfo();
     boatInfo.pitch = 0;
@@ -403,6 +449,27 @@ const PixelWater = ({ isPaused = false }) => {
       lastFrameTime = timestamp;
 
       const time = timestamp * 0.001;
+
+      parallax.x += (parallax.targetX - parallax.x) * 0.08;
+      parallax.y += (parallax.targetY - parallax.y) * 0.08;
+
+      const layerX = parallax.x * 14;
+      const layerY = parallax.y * 9;
+      waterLayer.position.set(layerX * 0.2, layerY * 0.2, 0);
+      fishLayer.position.set(layerX * 0.75, layerY * 0.75, 0);
+      fishLayer.rotation.z = parallax.x * -0.006;
+      boatLayer.position.set(layerX * 1.6, layerY * 1.6, 0);
+      boatLayer.rotation.z = parallax.x * -0.012;
+      foamLayer.position.set(layerX * 1.25, layerY * 1.25, 0);
+
+      // A restrained stream of tilt-led ripples makes the surface feel like it
+      // is flowing downhill without flooding the low-resolution simulation.
+      if (Math.abs(parallax.x) + Math.abs(parallax.y) > 0.2 && timestamp - lastTiltRipple > 180) {
+        const rippleX = width * (0.5 + parallax.x * 0.18);
+        const rippleY = height * (0.5 + parallax.y * 0.18);
+        applyRipple(rippleX, rippleY, 20, 0);
+        lastTiltRipple = timestamp;
+      }
 
       // Fast single-pass 32-bit clear
       pixelData32.fill(baseColor32);
@@ -733,6 +800,9 @@ const PixelWater = ({ isPaused = false }) => {
 
       const x = e.clientX;
       const y = e.clientY;
+      if (!parallax.orientationEnabled && e.pointerType !== 'touch') {
+        updatePointerParallax(x, y);
+      }
       const isTouch = e.pointerType === 'touch';
       const rippleStrength = isTouch ? 20 : 150;
 
@@ -774,11 +844,17 @@ const PixelWater = ({ isPaused = false }) => {
 
     const handlePointerLeave = () => {
       lastPointer = null;
+      if (!parallax.orientationEnabled) {
+        parallax.targetX = 0;
+        parallax.targetY = 0;
+      }
     };
 
     const handlePointerDown = (e) => {
       if (isPausedRef.current) return;
       if (e.target instanceof Element && e.target.closest('[data-water-ignore]')) return;
+      requestOrientationPermission();
+      if (!parallax.orientationEnabled) updatePointerParallax(e.clientX, e.clientY);
       const cx = e.clientX;
       const cy = e.clientY;
       const isTouch = e.pointerType === 'touch';
@@ -833,6 +909,7 @@ const PixelWater = ({ isPaused = false }) => {
     };
 
     window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
     window.addEventListener('pointerleave', handlePointerLeave);
     window.addEventListener('pointerup', handlePointerLeave);
     window.addEventListener('pointercancel', handlePointerLeave);
@@ -847,6 +924,7 @@ const PixelWater = ({ isPaused = false }) => {
       isMounted = false;
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('deviceorientation', handleDeviceOrientation, true);
       window.removeEventListener('pointerleave', handlePointerLeave);
       window.removeEventListener('pointerup', handlePointerLeave);
       window.removeEventListener('pointercancel', handlePointerLeave);
