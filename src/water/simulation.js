@@ -36,12 +36,13 @@ export const updateWaterSimulation = ({
       const lineNoise = Math.sin(phase + sinTable[column]);
       const dashBreak = Math.sin(column * 0.15 + dashPhase);
       const causticValue = Math.sin(column * 0.18 + causticPhase) * caustic;
+      const rippleDominates = Math.abs(value) > 0.35;
 
-      if (lineNoise > 0.995 && dashBreak > 0.3) {
+      if (!rippleDominates && lineNoise > 0.995 && dashBreak > 0.3) {
         colorIndex = 1;
         stretch = 2 + stretchTable[column];
       }
-      if (causticValue > 0.97 && lineNoise > 0.72 && dashBreak > 0.1) {
+      if (!rippleDominates && causticValue > 0.97 && lineNoise > 0.72 && dashBreak > 0.1) {
         colorIndex = 1;
         stretch = 1;
       }
