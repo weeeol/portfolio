@@ -15,6 +15,8 @@ const ProjectLedger = () => {
   const coverHoldAnimation = useRef(null);
   const coverHoldStartedAt = useRef(0);
   const coverHoldTriggered = useRef(false);
+  const navigationTimers = useRef([]);
+  const navigationToken = useRef(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [coverHoldProgress, setCoverHoldProgress] = useState(0);
   const [bookWidth, setBookWidth] = useState(MAX_PAGE_WIDTH);
@@ -112,16 +114,35 @@ const ProjectLedger = () => {
   useEffect(() => () => {
     if (coverHoldTimer.current) window.clearTimeout(coverHoldTimer.current);
     if (coverHoldAnimation.current) window.cancelAnimationFrame(coverHoldAnimation.current);
+    navigationTimers.current.forEach((timer) => window.clearTimeout(timer));
   }, []);
-  const openPage = (pageIndex) => bookRef.current?.pageFlip().flip(pageIndex, 'top');
+  const openPage = (pageIndex) => {
+    navigationToken.current += 1;
+    const token = navigationToken.current;
+    navigationTimers.current.forEach((timer) => window.clearTimeout(timer));
+    navigationTimers.current = [];
+
+    [0, 50, 150, 300].forEach((delay) => {
+      const timer = window.setTimeout(() => {
+        if (token !== navigationToken.current) return;
+        const pageFlip = bookRef.current?.pageFlip();
+        if (pageFlip) pageFlip.turnToPage(pageIndex);
+      }, delay);
+      navigationTimers.current.push(timer);
+    });
+  };
   const openChapter = (projectIndex) => {
     const chapterPageIndex = pages.findIndex(
       (page) => page.type === 'chapter' && page.index === projectIndex,
     );
 
     if (chapterPageIndex >= 0) {
-      bookRef.current?.pageFlip().turnToPage(chapterPageIndex);
+      openPage(chapterPageIndex);
     }
+  };
+  const openContents = () => {
+    const contentsPageIndex = pages.findIndex((page) => page.type === 'contents');
+    if (contentsPageIndex >= 0) openPage(contentsPageIndex);
   };
   const spread = Math.floor(currentPage / 2) + 1;
   const totalSpreads = Math.ceil((pages.length - 1) / 2);
@@ -130,7 +151,12 @@ const ProjectLedger = () => {
     <button
       key={project.title}
       type="button"
-      onClick={() => openChapter(projectIndex)}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openChapter(projectIndex);
+      }}
+      onClick={(event) => event.preventDefault()}
       onPointerMove={(event) => event.stopPropagation()}
       onPointerEnter={(event) => event.stopPropagation()}
       className="ledger-contents-entry"
@@ -152,7 +178,16 @@ const ProjectLedger = () => {
         <p>This project is part of the town archive, documenting an experiment in building useful software with a clear, focused purpose.</p>
       </div>
       <div className="ledger-chapter-actions">
-        <button type="button" onClick={() => openPage(1)} className="ledger-inline-button">
+        <button
+          type="button"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openContents();
+          }}
+          onClick={(event) => event.preventDefault()}
+          className="ledger-inline-button"
+        >
           ← Contents
         </button>
         {project.link && (

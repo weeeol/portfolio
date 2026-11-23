@@ -408,6 +408,8 @@
 
 .ledger-contents-entry {
   appearance: none;
+  position: relative;
+  z-index: 10;
   display: grid;
   grid-template-columns: 84px 1fr auto;
   gap: 10px;
@@ -419,6 +421,8 @@
   border-bottom: 2px solid #cf9e5c;
   text-align: left;
   cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
   font-family: "Press Start 2P", monospace;
 }
 
@@ -525,12 +529,17 @@
 }
 
 .ledger-inline-button {
+  position: relative;
+  z-index: 10;
   padding: 8px 10px;
   color: #fff9e6;
   background: #8b5a2b;
   border: 0;
   border-right: 3px solid #2d1a12;
   border-bottom: 3px solid #2d1a12;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
   font-size: 9px;
   letter-spacing: 0.08em;
   text-transform: uppercase;

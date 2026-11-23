@@ -1,5 +1,10 @@
 export const projectsData = [
   {
+    title: "VECTOR Engine",
+    link: "https://github.com/weeeol/VECTOR-Engine",
+    desc: "A custom hardware-accelerated 2D and 3D C++ game engine built from scratch."
+  },
+  {
     title: "Flowmake",
     link: "https://github.com/weeeol/Flowmake",
     desc: "Full-stack application that automatically converts Python source code into modern, professional flowcharts by parsing the Abstract Syntax Tree (AST)."
